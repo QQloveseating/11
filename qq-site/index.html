@@ -163,7 +163,7 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
 (function(){
   var cv=document.getElementById('bits');if(!cv)return;
   var ctx=cv.getContext('2d'),reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  var N=1700,W=0,H=0,dpr=1,ar=1.2,A,B,C,D,ch,ox,oy,rg,mx=-999,my=-999,last=0,yaw=0,prev=performance.now(),t0=prev;
+  var N=1700,W=0,H=0,dpr=1,ar=1.2,A,B,C,D,ch,ox,oy,rg,swR,swA,mx=-999,my=-999,last=0,yaw=0,prev=performance.now(),t0=prev,introDone=false,tIntro=0;
   function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
   function build(){
     var r=rng(7),i,k;A=new Float32Array(N*3);B=new Float32Array(N*3);C=new Float32Array(N*3);D=new Float32Array(N);ch=new Uint8Array(N);ox=new Float32Array(N);oy=new Float32Array(N);
@@ -193,6 +193,7 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
       var a2=r()*6.283,b2=Math.acos(2*r()-1),r2=.55*Math.cbrt(r());put(C,i,Math.sin(b2)*Math.cos(a2)*r2,Math.cos(b2)*r2-.05,Math.sin(b2)*Math.sin(a2)*r2);
       D[i]=r();ch[i]=r()<.5?1:0;
     }
+    swR=new Float32Array(N);swA=new Float32Array(N);for(i=0;i<N;i++){swR[i]=Math.min(1,Math.hypot(C[i*3],C[i*3+2])/.55);swA[i]=Math.random()*6.283}
   }
   function size(){
     dpr=Math.min(2,window.devicePixelRatio||1);W=Math.max(200,cv.clientWidth);H=Math.max(200,cv.clientHeight);ar=H/W;
@@ -201,8 +202,15 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
   function ease(x){return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2}
   /* where we are in the loop: s = 0 cube, 1 tree, m = morph progress (0 = settled) */
   function phase(now){
-    if(reduce)return {s:0,m:0,from:0,to:0};
-    var B_=window.BITS,HOLD_A=B_.hold,HOLD_B=B_.hold,MORPH=B_.morph,T=HOLD_A+MORPH+HOLD_B+MORPH,e=(now-t0)%T;
+    if(reduce)return {from:0,to:0,m:0};
+    if(!introDone){
+      /* wait for all three italic words on the left to land on English */
+      if(document.querySelectorAll('#name .ac.fin').length>=3&&now-t0>1200){introDone=true;tIntro=now}
+      else return {intro:true,m:0};
+    }
+    var B_=window.BITS,HOLD_A=B_.hold,HOLD_B=B_.hold,MORPH=B_.morph;
+    if(now<tIntro+MORPH)return {intro:true,m:(now-tIntro)/MORPH};
+    var T=HOLD_A+MORPH+HOLD_B+MORPH,e=(now-tIntro-MORPH)%T;
     if(e<HOLD_A)return {from:0,to:0,m:0};
     if(e<HOLD_A+MORPH)return {from:0,to:1,m:(e-HOLD_A)/MORPH};
     if(e<HOLD_A+MORPH+HOLD_B)return {from:1,to:1,m:0};
@@ -217,6 +225,8 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.textBaseline='middle';ctx.textAlign='center';
     var buckets=[];for(var q=0;q<BK*SZ;q++)buckets.push([]);
     var src=ph.from?B:A,dst=ph.to?B:A;
+    /* intro: the digits circle each other in a flat swirl (inner ones faster) while the headline plays; the swirl slows as the cube forms */
+    if(ph.intro&&!reduce){for(var ai0=0;ai0<N;ai0++)swA[ai0]+=dt*(2.6-2.1*swR[ai0])*(1-m)}
     function proj(x,y,z,i,isR){
       var cT=ct,sT=st;
       var x1=x*cy2+z*sy,z1=-x*sy+z*cy2,y2=y*cT-z1*sT,z2=y*sT+z1*cT,f=1/(1-z2*.22),px=cx+x1*f*S,py=cy+y2*f*S;
@@ -228,7 +238,12 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
     }
     for(var i=0;i<N;i++){
       var x,y,z,i3=i*3;
-      if(m<=0||ph.from===ph.to){x=dst[i3];y=dst[i3+1];z=dst[i3+2]}
+      if(ph.intro){
+        var c0=Math.cos(swA[i]),s0=Math.sin(swA[i]),qx=C[i3]*1.8,qz=C[i3+2]*1.8,sx=qx*c0+qz*s0,sz=-qx*s0+qz*c0,sy=C[i3+1]*.7+.04*Math.sin(now/500+i);
+        if(m>0){var u0=Math.min(1,Math.max(0,m*1.35-D[i]*.35)),v0=ease(u0);x=sx+(A[i3]-sx)*v0;y=sy+(A[i3+1]-sy)*v0;z=sz+(A[i3+2]-sz)*v0}
+        else{x=sx;y=sy;z=sz}
+      }
+      else if(m<=0||ph.from===ph.to){x=dst[i3];y=dst[i3+1];z=dst[i3+2]}
       else{
         var u=Math.min(1,Math.max(0,(m*1.35-D[i]*.35))),v=ease(u);
         if(v<.5){var w=ease(v*2);x=src[i3]+(C[i3]-src[i3])*w;y=src[i3+1]+(C[i3+1]-src[i3+1])*w;z=src[i3+2]+(C[i3+2]-src[i3+2])*w}
@@ -296,124 +311,14 @@ window.GLOW=Object.assign({size:45,intensity:1,life:520,taper:35,hard:45,tint:20
   addEventListener('resize',fit);fit();
 })();
 </script>
-<script>
-window.INK=Object.assign({size:83,life:3000,drip:95,rim:20,foil:4},window.INK||{});
-/* hover reveal on the headline: ragged ink blobs follow the pointer; inside them the letters turn into glossy foil
-   balloons. when the pointer moves on the ink shrinks and drips downward. */
-(function(){
-  var root=document.getElementById('name');if(!root)return;
-  if(!matchMedia('(hover:hover) and (pointer:fine)').matches||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
-  var out=document.createElement('canvas');out.className='reveal';out.setAttribute('aria-hidden','true');document.body.appendChild(out);
-  var oc=out.getContext('2d'),mk=document.createElement('canvas'),mc=mk.getContext('2d'),lay=document.createElement('canvas'),lc=lay.getContext('2d'),tmp=document.createElement('canvas'),tc=tmp.getContext('2d');
-  var PADL=40,PADR=40,PADT=24,PADB=150,dpr=1,W=0,H=0,ox=0,oy=0,blobs=[],raf=0,lx=null,ly=null,lastT=0;
-  function fit(){
-    var r=root.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);
-    ox=r.left-PADL;oy=r.top-PADT;W=Math.ceil(r.width+PADL+PADR);H=Math.ceil(r.height+PADT+PADB);
-    [out,mk,lay,tmp].forEach(function(c){c.width=Math.round(W*dpr);c.height=Math.round(H*dpr)});
-    out.style.left=ox+'px';out.style.top=oy+'px';out.style.width=W+'px';out.style.height=H+'px';
-  }
-  function inside(e){var r=root.getBoundingClientRect();return e.clientX>r.left-20&&e.clientX<r.right+20&&e.clientY>r.top-14&&e.clientY<r.bottom+14}
-  function spawn(x,y,now){
-    var n=18,j=[];for(var i=0;i<n;i++)j.push(.7+Math.random()*.55);
-    blobs.push({x:x,y:y,r0:window.INK.size*(.73+Math.random()*.55),t:now,life:window.INK.life*(.75+Math.random()*.65),j:j,drip:Math.random()<window.INK.drip/100,vy:0,len:0,rot:Math.random()*6.28});
-    if(blobs.length>90)blobs.shift();
-  }
-  function move(e){
-    var now=performance.now();
-    if(!inside(e)){lx=ly=null;return}
-    fit();var x=e.clientX-ox,y=e.clientY-oy;
-    if(lx===null){spawn(x,y,now);lx=x;ly=y}
-    else{
-      /* drop a blob every ~13px travelled, however small each mouse step is */
-      var dx=x-lx,dy=y-ly,d=Math.hypot(dx,dy);
-      if(d>=13){var n=Math.floor(d/13);for(var i=1;i<=n;i++)spawn(lx+dx*i/n,ly+dy*i/n,now);lx=x;ly=y}
-    }
-    if(!raf){lastT=now;raf=requestAnimationFrame(draw)}
-  }
-  function blobPath(c,b,r){
-    var n=b.j.length;c.beginPath();
-    for(var i=0;i<n;i++){var a=b.rot+i/n*6.283,rr=r*b.j[i];var px=b.x+Math.cos(a)*rr,py=b.y+Math.sin(a)*rr;i?c.lineTo(px,py):c.moveTo(px,py)}
-    c.closePath();
-  }
-  function stepBlobs(now,dt){
-    for(var i=blobs.length-1;i>=0;i--){
-      var b=blobs[i],a=now-b.t,k=a/b.life;if(k>=1){blobs.splice(i,1);continue}
-      b.r=b.r0*Math.pow(1-k,.7);
-      if(b.drip&&a>240){b.vy+=1100*dt;b.y+=b.vy*dt;b.len=Math.min(b.r0*3.2,b.len+b.vy*dt*.8)}
-    }
-  }
-  function paintBlobs(c,rim){
-    for(var i=0;i<blobs.length;i++){
-      var b=blobs[i];blobPath(c,b,b.r);rim?c.stroke():c.fill();
-      if(b.len>2){
-        /* a drip: a tear that is wide where it leaves the blob and comes to a rounded point */
-        var w=b.r*.5,top=b.y-b.len,tip=b.y+b.r*.2;
-        c.beginPath();c.moveTo(b.x-w,top);c.lineTo(b.x+w,top);c.quadraticCurveTo(b.x+w*.25,top+b.len*.55,b.x+w*.28,tip-w*.3);
-        c.arc(b.x,tip-w*.3,w*.28,0,Math.PI);c.quadraticCurveTo(b.x-w*.25,top+b.len*.55,b.x-w,top);c.closePath();rim?c.stroke():c.fill();
-      }
-    }
-  }
-  var COLS=['#f2f3fb','#9d86ff','#5fe0ff','#ffffff','#ff74cf','#ffc857','#f2f3fb'];
-  function glyphs(now){
-    var els=root.querySelectorAll('.ch.on,.ac .aw'),list=[],r0=root.getBoundingClientRect();
-    for(var i=0;i<els.length;i++){
-      var el=els[i],isW=el.classList.contains('aw');
-      if(isW&&!(parseFloat(el.style.opacity)>.15))continue;
-      var t=el.textContent;if(!t||t===' ')continue;
-      var r=el.getBoundingClientRect(),cs=getComputedStyle(el),fs=parseFloat(cs.fontSize);
-      if(isW){var nat=el.scrollWidth||r.width;fs*=Math.min(1,r.width/nat)}
-      list.push({t:t,x:r.left-ox,y:r.top-oy,h:r.height,fs:fs,fam:cs.fontFamily,st:cs.fontStyle,wt:cs.fontWeight,ls:cs.letterSpacing});
-    }
-    return list;
-  }
-  function chrome(now){
-    var g=glyphs(now),c=lc;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
-    var ph=(now/(window.INK.foil*1000))%1,grad=c.createLinearGradient(-W*ph,0,W*(2-ph),H*1.6);COLS.forEach(function(col,i){grad.addColorStop(i/(COLS.length-1),col)});
-    c.textBaseline='alphabetic';c.textAlign='left';c.lineJoin='round';
-    var lines={};
-    g.forEach(function(q){
-      c.font=q.st+' '+q.wt+' '+q.fs+'px '+q.fam;var m=c.measureText(q.t),asc=m.fontBoundingBoxAscent||q.fs*.8,des=m.fontBoundingBoxDescent||q.fs*.2;
-      var by=q.y+(q.h-(asc+des))/2+asc;
-      c.strokeStyle='rgba(18,16,40,.95)';c.lineWidth=Math.max(3,q.fs*.09);c.strokeText(q.t,q.x,by);
-      c.fillStyle=grad;c.fillText(q.t,q.x,by);c.strokeStyle=grad;c.lineWidth=q.fs*.05;c.strokeText(q.t,q.x,by);
-      var key=Math.round(by/8);if(!lines[key])lines[key]={top:by-asc,bot:by+des};
-    });
-    /* gloss: bright top edge and a dark underside, only where there is paint */
-    c.globalCompositeOperation='source-atop';
-    Object.keys(lines).forEach(function(k){var L=lines[k],hh=L.bot-L.top,gg=c.createLinearGradient(0,L.top,0,L.bot);
-      gg.addColorStop(0,'rgba(255,255,255,.95)');gg.addColorStop(.34,'rgba(255,255,255,0)');gg.addColorStop(.62,'rgba(10,10,50,0)');gg.addColorStop(1,'rgba(10,10,70,.7)');
-      c.fillStyle=gg;c.fillRect(0,L.top,W,hh)});
-    c.globalCompositeOperation='source-over';
-  }
-  function draw(now){
-    raf=0;var dt=Math.min(.05,(now-lastT)/1000);lastT=now;
-    stepBlobs(now,dt);mc.setTransform(dpr,0,0,dpr,0,0);mc.clearRect(0,0,W,H);mc.fillStyle='#fff';paintBlobs(mc,false);
-    if(!blobs.length){oc.setTransform(1,0,0,1,0,0);oc.clearRect(0,0,out.width,out.height);return}
-    chrome(now);
-    /* balloon letters only where the ink is */
-    tc.setTransform(1,0,0,1,0,0);tc.globalCompositeOperation='source-over';tc.clearRect(0,0,tmp.width,tmp.height);
-    tc.drawImage(lay,0,0);tc.globalCompositeOperation='destination-in';tc.drawImage(mk,0,0);tc.globalCompositeOperation='source-over';
-    /* ink: the mask itself, painted in the page colour, hides the white text underneath */
-    oc.setTransform(1,0,0,1,0,0);oc.clearRect(0,0,out.width,out.height);
-    oc.setTransform(dpr,0,0,dpr,0,0);oc.strokeStyle='rgba(255,255,255,'+(window.INK.rim/100)+')';oc.lineWidth=3;oc.lineJoin='round';paintBlobs(oc,true);
-    oc.fillStyle='rgb(20,20,26)';paintBlobs(oc,false);
-    oc.setTransform(1,0,0,1,0,0);oc.drawImage(tmp,0,0);
-    raf=requestAnimationFrame(draw);
-  }
-  addEventListener('pointermove',move,{passive:true});
-  document.addEventListener('mouseleave',function(){lx=ly=null});
-  addEventListener('resize',fit);fit();
-})();
-</script>
 <!-- tuner: press T (or add #tune to the address). remove this block before launch -->
 <script>
 (function(){
   var SPEC=[
     ['Pointer glow','GLOW',[['size','Size','px',6,80,1],['intensity','Brightness','%',1,80,1],['life','Trail length','ms',80,1600,20],['taper','Tail shrink','%',0,90,5],['hard','Core hardness','%',0,80,5],['tint','Blue tint','%',0,100,5],['spacing','Trail density','px',2,24,1]]],
-    ['Headline hover ink','INK',[['size','Blob size','px',20,110,1],['life','Lifetime','ms',400,3200,50],['drip','Drips','%',0,100,5],['rim','Edge line','%',0,60,2],['foil','Colour cycle','s',1,12,.5]]],
     ['Cube and tree','BITS',[['hold','Hold each shape','ms',800,8000,100],['morph','Change time','ms',600,5000,100],['spinCube','Cube spin','',0,150,5],['spinTree','Tree spin','',0,150,5],['size','Digit size','%',60,180,5],['dent','Pointer dent','px',0,120,2]]]
   ];
-  var DEF=JSON.parse(JSON.stringify({GLOW:window.GLOW,INK:window.INK,BITS:window.BITS}));
+  var DEF=JSON.parse(JSON.stringify({GLOW:window.GLOW,BITS:window.BITS}));
   var panel=null;
   function css(){var st=document.createElement('style');st.textContent=
     '.tuner{position:fixed;right:12px;bottom:12px;width:290px;max-height:82vh;overflow:auto;z-index:100;background:rgba(14,14,17,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 16px 16px;font:500 13px/1.4 Satoshi,system-ui,sans-serif;color:#f5f5f8}'+
@@ -422,7 +327,7 @@ window.INK=Object.assign({size:83,life:3000,drip:95,rim:20,foil:4},window.INK||{
     '.tuner .tb{display:flex;gap:8px;align-items:center;justify-content:space-between}.tuner button{font:inherit;color:#f5f5f8;background:#1c1c20;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:6px 11px;cursor:pointer}.tuner button:hover{border-color:rgba(255,255,255,.4)}'+
     '.tuner textarea{width:100%;height:96px;margin-top:10px;background:#0a0a0a;color:#bfe;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;font:11px/1.4 ui-monospace,Menlo,monospace;resize:vertical}'+
     '@media(max-width:600px){.tuner{left:12px;width:auto}}';document.head.appendChild(st)}
-  function dump(){var o={GLOW:window.GLOW,INK:window.INK,BITS:window.BITS};var t=panel.querySelector('textarea');t.value=JSON.stringify(o,null,1)}
+  function dump(){var o={GLOW:window.GLOW,BITS:window.BITS};var t=panel.querySelector('textarea');t.value=JSON.stringify(o,null,1)}
   function build(){
     css();panel=document.createElement('div');panel.className='tuner';
     var h='<div class="tb"><b>Tuner</b><span><button data-a="reset">Reset</button> <button data-a="close">Close</button></span></div>';
