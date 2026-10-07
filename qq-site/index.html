@@ -40,7 +40,8 @@
 </script>
 <script>
 /* opening: regular text is typed out with a white "_" caret; the three italic words sit in fixed-width slots,
-   cycle through languages together for 8s, and land on English at the same moment. Nothing around them moves. */
+   roll through languages in a cascade (top line first, each on its own rhythm: quick at first, slowing as it nears English) and land
+   on English one after another. Nothing around them moves. */
 (function(){
   var root=document.getElementById('name');if(!root)return;
   var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -94,16 +95,35 @@
     var nat=s.aw.scrollWidth,k=Math.min(1,s.w/nat);
     s.aw.style.transform=k<1?'scale('+k+')':'none';
   }
-  function swap(s,text){s.aw.style.transition='none';s.aw.style.opacity=0;setWord(s,text);void s.aw.offsetWidth;s.aw.style.transition='opacity .16s ease';s.aw.style.opacity=1}
+  /* a slot keeps one live word at a time; a swap lifts the new word in from below while the old one drifts up and fades */
+  function freshAw(s){
+    [].slice.call(s.el.querySelectorAll('.aw')).forEach(function(e){e.remove()});
+    var a=document.createElement('span');a.className='aw';s.el.appendChild(a);s.aw=a;return a;
+  }
+  var EASE='cubic-bezier(.22,1,.36,1)',DIM=.7;
+  function swap(s,text,gap,final){
+    var old=s.aw,nw=document.createElement('span');nw.className='aw';nw.textContent=text;s.el.appendChild(nw);
+    var dur=final?620:Math.max(110,Math.min(320,gap*.85)),tgt=final?1:DIM,rise=final?'.5em':'.38em';
+    nw._o=tgt;
+    nw.animate([{opacity:0,transform:'translateY('+rise+')',filter:'blur(4px)'},{opacity:tgt,transform:'translateY(0)',filter:'blur(0)'}],{duration:dur,easing:EASE,fill:'forwards'});
+    if(old&&old.textContent){
+      old.animate([{opacity:old._o||1,transform:'translateY(0)',filter:'blur(0)'},{opacity:0,transform:'translateY(-.38em)',filter:'blur(4px)'}],{duration:dur*.85,easing:EASE,fill:'forwards'}).onfinish=function(){old.remove()};
+    }else if(old){old.remove()}
+    s.aw=nw;
+  }
+  /* cascade: each line starts a little after the one above, with its own pace, so the three never tick in unison */
+  var CFG=[{off:0,g0:150,g1:540},{off:340,g0:165,g1:570},{off:690,g0:140,g1:610}],NF=8,LAND=620;
   function startCycles(t0){
-    var n=Math.floor(TOTAL/STEP)-1;                           /* 9 foreign languages, then English = 10 in 5s */
     slots.forEach(function(s,si){
       s.el.classList.remove('fin');
-      for(var k=0;k<n;k++){
-        later((function(s,w){return function(){swap(s,w)}})(s,s.words[(k+si*3)%s.words.length]),t0+k*STEP);
+      var c=CFG[si%CFG.length],t=t0+c.off;
+      for(var k=0;k<NF;k++){
+        var gap=c.g0+(c.g1-c.g0)*Math.pow(k/(NF-1),1.8);
+        later((function(s,w,g){return function(){swap(s,w,g,false)}})(s,s.words[(k+si*3)%s.words.length],gap),t);
+        t+=gap;
       }
-      later((function(s){return function(){swap(s,s.en)}})(s),t0+n*STEP);
-      later((function(s){return function(){s.el.classList.add('fin')}})(s),t0+TOTAL);
+      later((function(s){return function(){swap(s,s.en,0,true)}})(s),t);
+      later((function(s){return function(){s.el.classList.add('fin')}})(s),t+LAND);
     });
   }
   var last=null;
@@ -125,7 +145,7 @@
   function reset(){
     timers.forEach(clearTimeout);timers=[];cancelAnimationFrame(raf);last=null;
     seq.forEach(function(it){if(it.k==='ch')it.el.classList.remove('on')});
-    slots.forEach(function(s){s.aw.style.opacity=0;s.aw.textContent='';s.el.classList.remove('fin');s.ph.classList.remove('show')});
+    slots.forEach(function(s){freshAw(s);s.aw.style.opacity=0;s.el.classList.remove('fin');s.ph.classList.remove('show')});
     caret.style.opacity=0;caret.classList.remove('blink');
   }
   function showAll(){
