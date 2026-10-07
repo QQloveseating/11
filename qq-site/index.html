@@ -183,7 +183,7 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
 (function(){
   var cv=document.getElementById('bits');if(!cv)return;
   var ctx=cv.getContext('2d'),reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  var N=1700,W=0,H=0,dpr=1,ar=1.2,A,B,C,D,ch,ox,oy,rg,Sp,mx=-999,my=-999,last=0,yaw=0,prev=performance.now(),t0=prev,introDone=false,tIntro=0;
+  var N=1700,W=0,H=0,dpr=1,ar=1.2,A,B,C,D,ch,ox,oy,rg,Sp,mx=-999,my=-999,last=0,yaw=0,prev=performance.now(),t0=prev,introDone=false,tIntro=0,spin=0,spin0=0,spinEnd=0,morphInit=false,TB=.42,OM=1.0;
   function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
   function build(){
     var r=rng(7),i,k;A=new Float32Array(N*3);B=new Float32Array(N*3);C=new Float32Array(N*3);D=new Float32Array(N);ch=new Uint8Array(N);ox=new Float32Array(N);oy=new Float32Array(N);
@@ -213,17 +213,16 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
       var a2=r()*6.283,b2=Math.acos(2*r()-1),r2=.55*Math.cbrt(r());put(C,i,Math.sin(b2)*Math.cos(a2)*r2,Math.cos(b2)*r2-.05,Math.sin(b2)*Math.sin(a2)*r2);
       D[i]=r();ch[i]=r()<.5?1:0;
     }
-    /* the intro ball: a globe of digits, mostly on meridians and parallels so its turning reads as 3D */
+    /* the intro ball: every digit sits in the direction of its own cube point, snapped onto meridians and parallels,
+       so the ball can swell outward into the cube along straight radial paths */
     Sp=new Float32Array(N*3);
-    var RB=.80,tiltB=.42,ctb=Math.cos(tiltB),stb=Math.sin(tiltB);
+    var RB=.80,PAR=[-.8,-.5333,-.2667,0,.2667,.5333,.8],MER=6.2832/12;
     for(i=0;i<N;i++){
-      var ph1,th1,rb=RB;
-      if(i%10<4){ph1=Math.floor(r()*12)/12*6.283;th1=Math.acos(2*r()-1)}              /* meridians */
-      else if(i%10<7){th1=Math.acos(-.8+Math.floor(r()*7)/6*1.6);ph1=r()*6.283}          /* parallels */
-      else{ph1=r()*6.283;th1=Math.acos(2*r()-1);rb=RB*(.9+.1*r())}                        /* scattered shell */
-      rb+=(r()-.5)*.02;
-      var gx=rb*Math.sin(th1)*Math.cos(ph1),gy=rb*Math.cos(th1),gz=rb*Math.sin(th1)*Math.sin(ph1);
-      Sp[i*3]=gx;Sp[i*3+1]=gy*ctb-gz*stb;Sp[i*3+2]=gy*stb+gz*ctb;                          /* tilt the axis */
+      var ax=A[i*3],ay=A[i*3+1],az=A[i*3+2],ln=Math.hypot(ax,ay,az)||1,cy0=ay/ln,ph0=Math.atan2(az,ax);
+      if(i%10<4){ph0=Math.round(ph0/MER)*MER}                                         /* meridians */
+      else if(i%10<7){var bb=1e9,bi=0;for(var q=0;q<PAR.length;q++){var dd=Math.abs(cy0-PAR[q]);if(dd<bb){bb=dd;bi=q}}cy0=PAR[bi]}   /* parallels */
+      var sy0=Math.sqrt(Math.max(0,1-cy0*cy0)),rb=RB*(1+(r()-.5)*.012);
+      Sp[i*3]=rb*sy0*Math.cos(ph0);Sp[i*3+1]=rb*cy0;Sp[i*3+2]=rb*sy0*Math.sin(ph0);
     }
   }
   function size(){
@@ -251,11 +250,19 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
   function render(now){
     var dt=Math.min(.05,(now-prev)/1000);prev=now;var ph=phase(now),m=ph.m,S=W/2*.98,cx=W/2,cy=H/2,tilt=.2,ct=Math.cos(tilt),st=Math.sin(tilt);
     var BQ=window.BITS,vc=BQ.spinCube/100,vt=BQ.spinTree/100,sp=ph.intro?(.9+(vc-.9)*ease(m)):(ph.from===ph.to?(ph.from?vt:vc):vc+(vt-vc)*(ph.to?ease(m):1-ease(m)));
-    if(!reduce)yaw+=dt*sp;
+    if(!reduce&&!ph.intro)yaw+=dt*sp;
     var cy2=Math.cos(yaw),sy=Math.sin(yaw);
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.textBaseline='middle';ctx.textAlign='center';
     var buckets=[];for(var q=0;q<BK*SZ;q++)buckets.push([]);
-    var src=ph.from?B:A,dst=ph.to?B:A;
+    var src=ph.from?B:A,dst=ph.to?B:A,introPhi=0,introBeta=0;
+    if(ph.intro){
+      if(m<=0){if(!reduce)spin+=dt*OM;introPhi=spin;introBeta=TB;morphInit=false}
+      else{
+        /* spin slows and lands on a whole turn exactly as the cube forms; the tilt eases to upright */
+        if(!morphInit){morphInit=true;spin0=spin;spinEnd=Math.ceil((spin0+OM*(window.BITS.morph/1000)/3)/6.2832)*6.2832}
+        introPhi=spin0+(spinEnd-spin0)*(1-Math.pow(1-m,3));introBeta=TB*(1-ease(m));
+      }
+    }
     function proj(x,y,z,i,isR){
       var cT=ct,sT=st;
       var x1=x*cy2+z*sy,z1=-x*sy+z*cy2,y2=y*cT-z1*sT,z2=y*sT+z1*cT,f=1/(1-z2*.22),px=cx+x1*f*S,py=cy+y2*f*S;
@@ -268,9 +275,11 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
     for(var i=0;i<N;i++){
       var x,y,z,i3=i*3;
       if(ph.intro){
-        var sx=Sp[i3],sy=Sp[i3+1],sz=Sp[i3+2];
-        if(m>0){var u0=Math.min(1,Math.max(0,m*1.35-D[i]*.35)),v0=ease(u0);x=sx+(A[i3]-sx)*v0;y=sy+(A[i3+1]-sy)*v0;z=sz+(A[i3+2]-sz)*v0}
-        else{x=sx;y=sy;z=sz}
+        var v0=0;
+        if(m>0){var dly=(Sp[i3+1]/.8+1)/2;v0=ease(Math.min(1,Math.max(0,m*1.18-.18*dly)))}
+        var bx=Sp[i3]+(A[i3]-Sp[i3])*v0,by=Sp[i3+1]+(A[i3+1]-Sp[i3+1])*v0,bz=Sp[i3+2]+(A[i3+2]-Sp[i3+2])*v0;
+        var cp=Math.cos(introPhi),sp2=Math.sin(introPhi),bx2=bx*cp+bz*sp2,bz2=-bx*sp2+bz*cp,cb=Math.cos(introBeta),sb=Math.sin(introBeta);
+        x=bx2;y=by*cb-bz2*sb;z=by*sb+bz2*cb;
       }
       else if(m<=0||ph.from===ph.to){x=dst[i3];y=dst[i3+1];z=dst[i3+2]}
       else{
