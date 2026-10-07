@@ -46,7 +46,7 @@
 (function(){
   var root=document.getElementById('name');if(!root)return;
   var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  var lines=[].slice.call(root.querySelectorAll('.ln')),seq=[],slots=[],timers=[],raf=0,TOTAL=5000,STEP=500;
+  var lines=[].slice.call(root.querySelectorAll('.ln')),seq=[],slots=[],timers=[],anims=[],raf=0;
   var caret=document.createElement('i');caret.className='caret2';root.appendChild(caret);
   lines.forEach(function(ln){
     [].slice.call(ln.childNodes).forEach(function(n){
@@ -101,37 +101,39 @@
     [].slice.call(s.el.querySelectorAll('.aw')).forEach(function(e){e.remove()});
     var a=document.createElement('span');a.className='aw';s.el.appendChild(a);s.aw=a;return a;
   }
-  var EASE='cubic-bezier(.22,1,.36,1)',DIM=.7;
+  var DIM=.7;
   /* Instrument Serif matches the body font at .97em. Fallback scripts have taller glyphs, so they are drawn a little smaller */
   function scriptScale(t){
-    if(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(t))return .82;
-    if(/[\u0900-\u097f]/.test(t))return .84;
-    if(/[\u0e00-\u0e7f]/.test(t))return .84;
+    if(/[぀-ヿ㐀-鿿가-힯]/.test(t))return .82;
+    if(/[ऀ-ॿ]/.test(t))return .84;
+    if(/[฀-๿]/.test(t))return .84;
     return 1;
   }
-  function swap(s,text,gap,final){
-    var old=s.aw,nw=document.createElement('span');nw.className='aw';nw.textContent=text;nw.style.fontSize=(.97*scriptScale(text)).toFixed(3)+'em';s.el.appendChild(nw);
-    var dur=final?620:Math.max(110,Math.min(320,gap*.85)),tgt=final?1:DIM,rise=final?'.5em':'.38em';
-    nw._o=tgt;
-    nw.animate([{opacity:0,transform:'translateY('+rise+')',filter:'blur(4px)'},{opacity:tgt,transform:'translateY(0)',filter:'blur(0)'}],{duration:dur,easing:EASE,fill:'forwards'});
-    if(old&&old.textContent){
-      old.animate([{opacity:old._o||1,transform:'translateY(0)',filter:'blur(0)'},{opacity:0,transform:'translateY(-.38em)',filter:'blur(4px)'}],{duration:dur*.85,easing:EASE,fill:'forwards'}).onfinish=function(){old.remove()};
-    }else if(old){old.remove()}
-    s.aw=nw;
+  /* each italic word is a vertical reel: the languages sit in one column that slides upward in a single motion,
+     starting quickly and easing into English. Nothing stops on the way, so there is no dwell between languages. */
+  var REEL=[{off:0,dur:1600},{off:130,dur:1740},{off:260,dur:1880}],NF=8,REEL_EASE='cubic-bezier(.8,.8,.6,1)';   /* brisk from the first frame, steady through the middle, only the last word settles */
+  function startReel(s,si){
+    var c=REEL[si%REEL.length],H=s.el.getBoundingClientRect().height||s.el.offsetHeight;
+    var win=document.createElement('span'),strip=document.createElement('span');win.className='win';strip.className='strip';
+    var list=[];for(var k=0;k<NF;k++)list.push(s.words[(k+si*3)%s.words.length]);list.push(s.en);
+    list.forEach(function(w,i){
+      var it=document.createElement('span'),tx=document.createElement('span');it.className='rw';it.style.height=H+'px';
+      tx.textContent=w;tx.style.fontSize=(.97*scriptScale(w)).toFixed(3)+'em';tx.style.opacity=(i===list.length-1)?1:DIM;
+      it.appendChild(tx);strip.appendChild(it);
+    });
+    win.appendChild(strip);s.el.appendChild(win);
+    win.animate([{opacity:0},{opacity:1}],{duration:200,fill:'forwards'});
+    var a=strip.animate([{transform:'translateY(0)'},{transform:'translateY('+(-(list.length-1)*H)+'px)'}],{duration:c.dur,easing:REEL_EASE,fill:'forwards'});
+    anims.push(a);
+    a.onfinish=function(){                /* hand over to the plain English word so the settled state is exactly the old one */
+      setWord(s,s.en);s.aw.style.opacity=1;win.remove();s.el.classList.add('fin');
+    };
   }
-  /* cascade: each line starts a little after the one above, with its own pace, so the three never tick in unison */
-  var CFG=[{off:0,g0:150,g1:540},{off:340,g0:165,g1:570},{off:690,g0:140,g1:610}],NF=8,LAND=620;
+  /* the three words start a beat apart, so they never move in lockstep */
   function startCycles(t0){
     slots.forEach(function(s,si){
       s.el.classList.remove('fin');
-      var c=CFG[si%CFG.length],t=t0+c.off;
-      for(var k=0;k<NF;k++){
-        var gap=c.g0+(c.g1-c.g0)*Math.pow(k/(NF-1),1.8);
-        later((function(s,w,g){return function(){swap(s,w,g,false)}})(s,s.words[(k+si*3)%s.words.length],gap),t);
-        t+=gap;
-      }
-      later((function(s){return function(){swap(s,s.en,0,true)}})(s),t);
-      later((function(s){return function(){s.el.classList.add('fin')}})(s),t+LAND);
+      later((function(s,si){return function(){startReel(s,si)}})(s,si),t0+REEL[si%REEL.length].off);
     });
   }
   var last=null;
@@ -151,9 +153,9 @@
     last=null;                                                  /* the moving caret hides: only the parked one stays */
   }
   function reset(){
-    timers.forEach(clearTimeout);timers=[];cancelAnimationFrame(raf);last=null;
+    timers.forEach(clearTimeout);timers=[];anims.forEach(function(a){try{a.onfinish=null;a.cancel()}catch(e){}});anims=[];cancelAnimationFrame(raf);last=null;
     seq.forEach(function(it){if(it.k==='ch')it.el.classList.remove('on')});
-    slots.forEach(function(s){freshAw(s);s.aw.style.opacity=0;s.el.classList.remove('fin');s.ph.classList.remove('show')});
+    slots.forEach(function(s){[].slice.call(s.el.querySelectorAll('.win')).forEach(function(e){e.remove()});freshAw(s);s.aw.style.opacity=0;s.el.classList.remove('fin');s.ph.classList.remove('show')});
     caret.style.opacity=0;caret.classList.remove('blink');
   }
   function showAll(){
@@ -163,17 +165,17 @@
   function run(){
     reset();sizeSlots();calibrate();
     if(reduce){showAll();return}
-    var t=420;
+    var t=160,BR=100;
     seq.forEach(function(it){
       if(it.k==='ch'){
         later((function(it){return function(){it.el.classList.add('on');last=it.el}})(it),t);
-        t+=/[,.]/.test(it.c)?120:(it.c===' '?44:46);
+        t+=/[,.]/.test(it.c)?70:(it.c===' '?30:36);
       }else if(it.k==='ac'){
         later((function(it){return function(){park(it)}})(it),t);
-      }else if(it.k==='br')t+=240;
+      }else if(it.k==='br')t+=BR;
     });
     raf=requestAnimationFrame(place);
-    var tEnd=t-240+30;                                                   /* the pause after the last line is skipped: rolling starts as the last letter lands */
+    var tEnd=t-BR+20;                                                   /* the pause after the last line is skipped: rolling starts as the last letter lands */
     startCycles(tEnd);
     later(function(){                                                    /* cycling begins: the underscores vanish with it */
       slots.forEach(function(s){s.ph.classList.remove('show')});
