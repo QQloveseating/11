@@ -65,10 +65,22 @@ textarea{width:100%;height:150px;background:#0a0a0a;color:#cfe;border:1px solid 
   <div class="row"><label>Tracking</label><input id="ls" type="range" min="-8" max="8" step="1"><output></output></div>
   <div class="row"><label>Headline px</label><input id="fs" type="range" min="28" max="72" step="2"><output></output></div>
   <div class="row"><label>Dim others</label><input id="dimo" type="range" min="30" max="100" step="5"><output></output></div>
+  <h2>Pointer glow</h2>
+  <div class="row"><label>Size</label><input id="g_size" type="range" min="6" max="80" step="1"><output></output></div>
+  <div class="row"><label>Brightness</label><input id="g_intensity" type="range" min="2" max="80" step="1"><output></output></div>
+  <div class="row"><label>Trail length</label><input id="g_life" type="range" min="80" max="1600" step="20"><output></output></div>
+  <div class="row"><label>Tail shrink</label><input id="g_taper" type="range" min="0" max="90" step="5"><output></output></div>
+  <div class="row"><label>Core hardness</label><input id="g_hard" type="range" min="0" max="80" step="5"><output></output></div>
+  <div class="row"><label>Blue tint</label><input id="g_tint" type="range" min="0" max="100" step="5"><output></output></div>
+  <div class="row"><label>Trail density</label><input id="g_spacing" type="range" min="2" max="24" step="1"><output></output></div>
+  <p class="note" style="margin-top:6px">Move the mouse anywhere on this page to feel it.</p>
   <h2>Settings</h2>
   <textarea id="out" readonly></textarea>
   <div class="bar" style="margin-top:8px"><button id="copy">Copy settings</button></div>
 </aside>
+<script>
+window.GLOW={size:22,intensity:20,life:520,taper:45,hard:0,tint:0,spacing:6};
+</script>
 </div>
 <script>
 (function(){
@@ -115,7 +127,7 @@ function sync(){
   hl.style.setProperty("--fs",S.fs+"px");hl.style.setProperty("--ws",(S.size/100*1)+"em");
   hl.style.setProperty("--wf",FONTS[S.font]);hl.style.setProperty("--wls",(S.ls/100)+"em");
   hl.style.setProperty("--dimc","rgba(245,245,248,"+(S.dimo/100)+")");
-  var o={};Object.keys(S).forEach(function(k){o[k]=S[k]});$("out").value=JSON.stringify(o,null,2);
+  var o={};Object.keys(S).forEach(function(k){o[k]=S[k]});o.glow=window.GLOW;$("out").value=JSON.stringify(o,null,2);
 }
 [].concat(ctl).forEach(function(k){$(k).addEventListener("input",function(){S[k]=parseFloat(this.value);sync();if(k==="size"||k==="fs"||k==="ls")layout()})});
 ["effect","ease","font","order","sync"].forEach(function(k){$(k).addEventListener("change",function(){S[k]=this.value;sync();layout();play()})});
@@ -188,4 +200,49 @@ sync();
 (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){layout();play()});
 window.__lab={S:S,play:play,sync:sync,layout:layout,FX:FX};
 })();
-</script></body></html>
+</script><script>
+/* glow engine: identical to the home page, driven by the sliders in the panel */
+(function(){
+  if(!matchMedia('(hover:hover) and (pointer:fine)').matches||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  var c=document.createElement('canvas');c.className='glow';c.setAttribute('aria-hidden','true');document.body.appendChild(c);
+  var x=c.getContext('2d'),W=0,H=0,dpr=1,pts=[],raf=0,lx=null,ly=null;
+  function fit(){dpr=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr}
+  function add(px,py,now){pts.push({x:px,y:py,t:now});if(pts.length>400)pts.shift()}
+  function move(e){
+    var G=window.GLOW,now=performance.now();
+    if(lx!==null){
+      var dx=e.clientX-lx,dy=e.clientY-ly,d=Math.hypot(dx,dy),n=Math.floor(d/Math.max(2,G.spacing));
+      for(var i=1;i<=n;i++)add(lx+dx*i/(n+1),ly+dy*i/(n+1),now);       /* fill the gap on fast moves so the trail stays smooth */
+    }
+    add(e.clientX,e.clientY,now);lx=e.clientX;ly=e.clientY;
+    if(!raf)raf=requestAnimationFrame(draw);
+  }
+  function draw(now){
+    var G=window.GLOW;raf=0;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+    while(pts.length&&now-pts[0].t>G.life)pts.shift();
+    var tr=Math.round(255-(255-105)*G.tint/100),tg=Math.round(255-(255-224)*G.tint/100),tb=255,hard=G.hard/100,tp=G.taper/100;
+    for(var i=0;i<pts.length;i++){
+      var p=pts[i],k=1-(now-p.t)/G.life,r=G.size*((1-tp)+tp*k),g=x.createRadialGradient(p.x,p.y,0,p.x,p.y,r),al=(G.intensity/100)*k*k;
+      g.addColorStop(0,'rgba('+tr+','+tg+','+tb+','+al.toFixed(3)+')');
+      if(hard>0)g.addColorStop(hard,'rgba('+tr+','+tg+','+tb+','+(al*.8).toFixed(3)+')');
+      g.addColorStop(1,'rgba('+tr+','+tg+','+tb+',0)');
+      x.fillStyle=g;x.fillRect(p.x-r,p.y-r,r*2,r*2);
+    }
+    if(pts.length)raf=requestAnimationFrame(draw);
+  }
+  addEventListener('pointermove',move,{passive:true});
+  addEventListener('pointerleave',function(){lx=ly=null});
+  document.addEventListener('mouseleave',function(){lx=ly=null});
+  addEventListener('resize',fit);fit();
+})();
+(function(){
+  var fmt={size:"px",intensity:"%",life:"ms",taper:"%",hard:"%",tint:"%",spacing:"px"};
+  Object.keys(fmt).forEach(function(k){
+    var el=document.getElementById("g_"+k);if(!el)return;
+    function show(){el.value=window.GLOW[k];el.parentNode.querySelector("output").textContent=window.GLOW[k]+fmt[k]}
+    el.addEventListener("input",function(){window.GLOW[k]=parseFloat(el.value);show();if(window.__lab)window.__lab.sync()});show();
+  });
+  if(window.__lab)window.__lab.sync();
+})();
+</script>
+</body></html>
