@@ -443,7 +443,7 @@ a.who{cursor:pointer}
 .name .ln{word-spacing:.11em}
 
 /* small line above the two project covers */
-.more{font-size:14px;line-height:20px;color:var(--muted);letter-spacing:-.01em;margin:0}
+.more{font-size:16px;line-height:24px;color:var(--muted);letter-spacing:-.02em;text-align:center;margin:0}   /* same size and colour as the project descriptions ("Seamlessly integrating...") */
 .more+.proj{margin-top:16px}
 /* cards share the cover's side gutters on smaller screens so their edges line up with the text above */
 @media (max-width:1140px){.wrap{padding-left:56px;padding-right:56px}}
