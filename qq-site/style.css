@@ -399,5 +399,5 @@ a.who{cursor:pointer}
   .scan{width:100%}
 }
 
-/* cover list: spacing between entries reduced by 1/3 (gap between lines 8px -> ~5.3px) */
-.cv-k,.cv .row,.cv .mg{line-height:21.33px}
+/* cover list: horizontal blank between label and value reduced by 1/3 (value column offset 314px -> ~209px) */
+@media (min-width:721px){.cv{grid-template-columns:minmax(0,185px) minmax(0,1fr)}}
