@@ -470,8 +470,7 @@ a.who{cursor:pointer}
 .cv-k.g,.cv .row.g{margin-top:34px}
 
 /* italic words as vertical reels: a window one line tall (with room above and below for the fade) over a column of languages */
-.name .win{position:absolute;left:-.2em;right:-.2em;top:-.16em;bottom:-.16em;overflow:hidden;pointer-events:none;
-  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 10.5%,#000 89.5%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 10.5%,#000 89.5%,transparent 100%)}
+.name .win{position:absolute;left:-.2em;right:-.2em;top:-.16em;bottom:-.16em;pointer-events:none}   /* no clipping and no mask: words fade and blur themselves */
 .name .strip{position:absolute;left:.2em;top:.16em;display:flex;flex-direction:column;will-change:transform}
 .name .rw{display:flex;align-items:flex-end;white-space:nowrap}
 .name .rw span{display:block;line-height:1;font-family:var(--serif),"Songti SC","Noto Serif CJK SC","Hiragino Mincho ProN","Apple SD Gothic Neo",serif;font-style:italic;font-weight:400;letter-spacing:normal}

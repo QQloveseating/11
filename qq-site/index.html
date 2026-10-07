@@ -4,9 +4,9 @@
 <header class="cover" id="top">
   <h1 class="name" id="name" aria-label="Hi I’m QQ. I shape ambiguity. I design with taste. I ship with code.">
     <span class="ln">Hi I’m QQ</span>
-    <span class="ln">I shape <span class="ac" data-t="ambiguity" data-l="模糊性|曖昧さ|ambiguïté|모호함|ambigüedad|ambiguità|ambiguidade|belirsizlik|अस्पष्टता"></span></span>
-    <span class="ln">I design with <span class="ac" data-t="taste" data-l="品味|センス|goût|취향|gusto|Geschmack|gosto|zevk|रुचि"></span></span>
-    <span class="ln">I ship with <span class="ac" data-t="code" data-l="代码|コード|코드|код|código|codice|kod|कोड|โค้ด"></span></span>
+    <span class="ln">I shape <span class="ac" data-t="ambiguity" data-l="模糊性|曖昧さ|ambiguïté|모호함|ambigüedad|ambiguità|ambiguidade|belirsizlik|अस्पष्टता|Mehrdeutigkeit|неоднозначность|ความคลุมเครือ|ασάφεια"></span></span>
+    <span class="ln">I design with <span class="ac" data-t="taste" data-l="品味|センス|goût|취향|gusto|Geschmack|gosto|zevk|रुचि|вкус|รสนิยม|γούστο|smaak"></span></span>
+    <span class="ln">I ship with <span class="ac" data-t="code" data-l="代码|コード|코드|код|código|codice|kod|कोड|โค้ด|κώδικας|mã|Kode|kód"></span></span>
   </h1>
   <div class="c-left">
     <div class="cv">
@@ -46,7 +46,7 @@
 (function(){
   var root=document.getElementById('name');if(!root)return;
   var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  var lines=[].slice.call(root.querySelectorAll('.ln')),seq=[],slots=[],timers=[],anims=[],raf=0;
+  var lines=[].slice.call(root.querySelectorAll('.ln')),seq=[],slots=[],timers=[],anims=[],raf2=[],raf=0;
   var caret=document.createElement('i');caret.className='caret2';root.appendChild(caret);
   lines.forEach(function(ln){
     [].slice.call(ln.childNodes).forEach(function(n){
@@ -107,24 +107,38 @@
     if(/[぀-ヿ㐀-鿿가-힯]/.test(t))return .82;
     if(/[ऀ-ॿ]/.test(t))return .84;
     if(/[฀-๿]/.test(t))return .84;
+    if(/[\u0370-\u04ff]/.test(t))return .92;   /* Greek and Cyrillic fall back to a system serif that sits a little taller */
     return 1;
   }
   /* each italic word is a vertical reel: the languages sit in one column that slides upward in a single motion,
      starting quickly and easing into English. Nothing stops on the way, so there is no dwell between languages. */
-  var REEL=[{off:0,dur:1600},{off:130,dur:1740},{off:260,dur:1880}],NF=8,REEL_EASE='cubic-bezier(.8,.8,.6,1)';   /* brisk from the first frame, steady through the middle, only the last word settles */
+  /* 12 languages per word. Speed is 20% above the previous reel, so with 1.5x the distance each reel runs 1.25x as long. */
+  var REEL=[{off:0,dur:2000},{off:130,dur:2175},{off:260,dur:2350}],NF=12,REEL_EASE='cubic-bezier(.8,.8,.6,1)';
   function startReel(s,si){
     var c=REEL[si%REEL.length],H=s.el.getBoundingClientRect().height||s.el.offsetHeight;
     var win=document.createElement('span'),strip=document.createElement('span');win.className='win';strip.className='strip';
     var list=[];for(var k=0;k<NF;k++)list.push(s.words[(k+si*3)%s.words.length]);list.push(s.en);
+    var its=[];
     list.forEach(function(w,i){
       var it=document.createElement('span'),tx=document.createElement('span');it.className='rw';it.style.height=H+'px';
       tx.textContent=w;tx.style.fontSize=(.97*scriptScale(w)).toFixed(3)+'em';tx.style.opacity=(i===list.length-1)?1:DIM;
-      it.appendChild(tx);strip.appendChild(it);
+      it.appendChild(tx);strip.appendChild(it);its.push(it);
     });
     win.appendChild(strip);s.el.appendChild(win);
-    win.animate([{opacity:0},{opacity:1}],{duration:200,fill:'forwards'});
+    win.animate([{opacity:0},{opacity:1}],{duration:160,fill:'forwards'});
     var a=strip.animate([{transform:'translateY(0)'},{transform:'translateY('+(-(list.length-1)*H)+'px)'}],{duration:c.dur,easing:REEL_EASE,fill:'forwards'});
     anims.push(a);
+    /* no hard window edge: every word fades and blurs by itself according to how far it is from the line it would rest on */
+    function soften(){
+      if(!win.isConnected)return;
+      var ty=new DOMMatrix(getComputedStyle(strip).transform).m42;
+      for(var k=0;k<its.length;k++){
+        var ad=Math.abs(k*H+ty)/H,o=Math.max(0,1-Math.pow(ad,1.5)),bl=Math.min(10,7*Math.pow(ad,1.25)),st=its[k].style;
+        st.opacity=o.toFixed(3);st.visibility=o<.01?'hidden':'visible';st.filter=bl>.2?'blur('+bl.toFixed(1)+'px)':'none';
+      }
+      raf2.push(requestAnimationFrame(soften));
+    }
+    soften();
     a.onfinish=function(){                /* hand over to the plain English word so the settled state is exactly the old one */
       setWord(s,s.en);s.aw.style.opacity=1;win.remove();s.el.classList.add('fin');
     };
@@ -153,7 +167,7 @@
     last=null;                                                  /* the moving caret hides: only the parked one stays */
   }
   function reset(){
-    timers.forEach(clearTimeout);timers=[];anims.forEach(function(a){try{a.onfinish=null;a.cancel()}catch(e){}});anims=[];cancelAnimationFrame(raf);last=null;
+    timers.forEach(clearTimeout);timers=[];anims.forEach(function(a){try{a.onfinish=null;a.cancel()}catch(e){}});anims=[];raf2.forEach(cancelAnimationFrame);raf2=[];cancelAnimationFrame(raf);last=null;
     seq.forEach(function(it){if(it.k==='ch')it.el.classList.remove('on')});
     slots.forEach(function(s){[].slice.call(s.el.querySelectorAll('.win')).forEach(function(e){e.remove()});freshAw(s);s.aw.style.opacity=0;s.el.classList.remove('fin');s.ph.classList.remove('show')});
     caret.style.opacity=0;caret.classList.remove('blink');
