@@ -274,4 +274,37 @@
   size();if(!reduce)requestAnimationFrame(frame);
 })();
 </script>
-<script>try{history.scrollRestoration="manual"}catch(e){}</script></body></html>
+<script>try{history.scrollRestoration="manual"}catch(e){}</script><script>
+/* pointer glow: a small soft white light under the cursor that leaves a short fading trail */
+(function(){
+  if(!matchMedia('(hover:hover) and (pointer:fine)').matches||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  var c=document.createElement('canvas');c.className='glow';c.setAttribute('aria-hidden','true');document.body.appendChild(c);
+  var x=c.getContext('2d'),W=0,H=0,dpr=1,pts=[],raf=0,lx=null,ly=null,LIFE=520,SIZE=22;
+  function fit(){dpr=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr}
+  function add(px,py,now){pts.push({x:px,y:py,t:now});if(pts.length>160)pts.shift()}
+  function move(e){
+    var now=performance.now();
+    if(lx!==null){
+      var dx=e.clientX-lx,dy=e.clientY-ly,d=Math.hypot(dx,dy),n=Math.floor(d/6);
+      for(var i=1;i<=n;i++)add(lx+dx*i/(n+1),ly+dy*i/(n+1),now);       /* fill the gap on fast moves so the trail stays smooth */
+    }
+    add(e.clientX,e.clientY,now);lx=e.clientX;ly=e.clientY;
+    if(!raf)raf=requestAnimationFrame(draw);
+  }
+  function draw(now){
+    raf=0;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+    while(pts.length&&now-pts[0].t>LIFE)pts.shift();
+    for(var i=0;i<pts.length;i++){
+      var p=pts[i],k=1-(now-p.t)/LIFE,r=SIZE*(.55+.45*k),g=x.createRadialGradient(p.x,p.y,0,p.x,p.y,r);
+      g.addColorStop(0,'rgba(255,255,255,'+(.2*k*k).toFixed(3)+')');g.addColorStop(1,'rgba(255,255,255,0)');
+      x.fillStyle=g;x.fillRect(p.x-r,p.y-r,r*2,r*2);
+    }
+    if(pts.length)raf=requestAnimationFrame(draw);
+  }
+  addEventListener('pointermove',move,{passive:true});
+  addEventListener('pointerleave',function(){lx=ly=null});
+  document.addEventListener('mouseleave',function(){lx=ly=null});
+  addEventListener('resize',fit);fit();
+})();
+</script>
+</body></html>
