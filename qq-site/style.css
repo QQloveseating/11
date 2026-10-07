@@ -401,3 +401,6 @@ a.who{cursor:pointer}
 
 /* cover list: horizontal blank between label and value reduced by 1/3 (value column offset 314px -> ~209px) */
 @media (min-width:721px){.cv{grid-template-columns:minmax(0,185px) minmax(0,1fr)}}
+
+/* cover right: open bag drawn from flickering 0/1 digits on black */
+.bits{display:block;max-width:100%}
