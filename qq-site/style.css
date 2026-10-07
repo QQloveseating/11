@@ -12,7 +12,7 @@ img,video{display:block;max-width:100%}
 .serif{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:normal}
 
 /* ---------- home ---------- */
-.wrap{max-width:1072px;margin:0 auto;padding:64px 0 0}
+.wrap{max-width:1200px;margin:0 auto;padding:64px 0 0}
 .hero{display:grid;grid-template-columns:707fr 341fr;gap:24px;align-items:start}
 .card{background:var(--card);border-radius:48px;border:1px solid rgba(255,255,255,.07);position:relative;overflow:hidden}
 .intro{padding:48px;height:357px}
@@ -117,7 +117,7 @@ transition:transform .45s cubic-bezier(.3,.7,.3,1);box-shadow:0 8px 24px rgba(0,
 .fade:hover img+img,.fade.on img+img{opacity:0}
 .phone{max-width:221px;margin:0 auto}
 .phone video{width:100%;border-radius:0}
-.bar{margin:160px auto 64px;max-width:1072px;min-height:135px;padding:24px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:48px}
+.bar{margin:160px auto 64px;max-width:1200px;min-height:135px;padding:24px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:48px}
 .bar .bl{display:flex;align-items:center;gap:32px;flex-wrap:wrap}
 .bar .who img{width:38px}
 .bar .btn.txt{width:auto}
@@ -248,7 +248,7 @@ box-shadow:0 0 40px rgba(105,224,255,.18),0 0 40px rgba(240,103,212,.12)}
 button,input{font-family:inherit}
 
 /* cover aligned to the content grid below (.wrap: 1072 wide, 707/341 columns, 24 gap) */
-.cover{--gx:max(36px,calc((100% - 1072px)/2));padding:64px var(--gx) 72px;grid-template-columns:707fr 341fr;gap:24px}
+.cover{--gx:max(36px,calc((100% - 1200px)/2));padding:64px var(--gx) 72px;grid-template-columns:707fr 341fr;gap:24px}
 .name{margin-left:-.04em}
 @media (max-width:1140px){
 .cover{--gx:36px;grid-template-columns:1fr;gap:36px}
@@ -297,7 +297,7 @@ color:var(--text);font-size:14px;line-height:18px;font-weight:500;letter-spacing
 
 /* home: top bar (same card as the project-page footer) */
 html{scroll-behavior:smooth}
-.topwrap{padding:24px max(36px,calc((100% - 1072px)/2)) 0}
+.topwrap{padding:24px max(36px,calc((100% - 1200px)/2)) 0}
 .topwrap .bar{margin:0 auto}
 .topwrap~.cover{padding-top:48px}
 @media (max-width:1140px){.topwrap{padding:24px 36px 0}}
@@ -373,10 +373,10 @@ a.who{cursor:pointer}
 /* headline hierarchy.  Reference step: the project-card title is 24px.
    three statements = X (a clear step above 24), greeting = X + (X-24)/2, i.e. half of that step again.
    desktop: 24 -> 48 -> 60 */
-.name{--x:clamp(26px,3.34vw,48px);font-size:var(--x);line-height:1.2}
-.name .ln:first-child{font-size:calc((var(--x) * 1.5 - 12px) * 1.4);line-height:1.08;letter-spacing:-.04em;margin-bottom:.245em}
+.name{--x0:clamp(26px,3.34vw,48px);--x:calc(var(--x0) * 1.2);font-size:var(--x);line-height:1.2}   /* headline text +20% */
+.name .ln:first-child{font-size:calc((var(--x0) * 1.5 - 12px) * 1.4 * 1.2);line-height:1.08;letter-spacing:-.04em;margin-bottom:.245em}
 @media (max-width:720px){
-  .name{--x:clamp(21px,6vw,28px)}
+  .name{--x0:clamp(21px,6vw,28px);--x:calc(var(--x0) * 1.2)}
   .name .ln:first-child{font-size:calc(var(--x) * 1.6 * 1.4);margin-bottom:.24em}
 }
 
@@ -392,10 +392,10 @@ a.who{cursor:pointer}
 
 /* ===== desktop cover: information on the left, one big picture bleeding off the right edge (reference layout) ===== */
 @media (min-width:1141px){
-  .cover{grid-template-columns:540px minmax(0,1fr);column-gap:24px;grid-template-rows:auto 1fr;align-items:start}
+  .cover{grid-template-columns:minmax(0,54%) minmax(0,1fr);column-gap:24px;grid-template-rows:auto 1fr;align-items:start}
   .name{grid-column:1;grid-row:1}
   .c-left{grid-column:1;grid-row:2;align-self:stretch}
-  .c-right{grid-column:2;grid-row:1 / span 2;align-self:center;margin-right:calc(max(36px,(100vw - 1072px) / 2) * -1);padding-right:0}
+  .c-right{grid-column:2;grid-row:1 / span 2;align-self:center;margin-right:calc(max(36px,(100vw - 1200px) / 2) * -1);padding-right:0}
   .scan{width:100%}
 }
 
@@ -411,7 +411,7 @@ a.who{cursor:pointer}
 .bits{position:absolute;left:calc(var(--padx) * -1);top:calc(var(--pady) * -1);width:calc(100% + 2 * var(--padx));height:calc(100% + 2 * var(--pady));display:block;pointer-events:none}   /* a transparent margin so nothing is clipped while the shapes sway */
 @media (min-width:1141px){
   .c-right.bagwrap{margin-right:0;align-self:stretch;aspect-ratio:auto;min-height:380px;
-    --fs1:calc((clamp(26px,3.34vw,48px) * 1.5 - 12px) * 1.4)}
+    --fs1:calc((clamp(26px,3.34vw,48px) * 1.5 - 12px) * 1.4 * 1.2)}
   .c-right.bagwrap{--padx:72px;--pady:72px}
   .bits{top:calc(33px + var(--fs1) * .167 - var(--pady));height:calc(100% - 33px - var(--fs1) * .167 - 4px + 2 * var(--pady));left:calc(-64px - var(--padx));width:calc(100% + 64px + 2 * var(--padx))}   /* the visible box reaches into the empty gap on the left; the margin around it only stops clipping */   /* reaches into the empty gap on the left so the artwork can be bigger */
 }
@@ -438,3 +438,13 @@ a.who{cursor:pointer}
   .topwrap .btn.txt{width:auto;padding:0 9px;font-size:13px}
   .topwrap .who{gap:6px}
 }
+
+/* headline: gaps between words +40% (the space glyph is .273em wide, so +.11em) */
+.name .ln{word-spacing:.11em}
+
+/* small line above the two project covers */
+.more{font-size:14px;line-height:20px;color:var(--muted);letter-spacing:-.01em;margin:0}
+.more+.proj{margin-top:16px}
+/* cards share the cover's side gutters on smaller screens so their edges line up with the text above */
+@media (max-width:1140px){.wrap{padding-left:56px;padding-right:56px}}
+@media (max-width:720px){.wrap{padding-left:24px;padding-right:24px}}
