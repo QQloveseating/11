@@ -402,5 +402,16 @@ a.who{cursor:pointer}
 /* cover list: horizontal blank between label and value reduced by 1/3 (value column offset 314px -> ~209px) */
 @media (min-width:721px){.cv{grid-template-columns:minmax(0,185px) minmax(0,1fr)}}
 
-/* cover right: open bag drawn from flickering 0/1 digits on black */
-.bits{display:block;max-width:100%}
+/* cover right: open bag drawn from flickering 0/1 digits on black.
+   wide: top = cap-height of "Hi I'm QQ", bottom = baseline of the last list row, right = right edge of "Get In Touch".
+   stacked: full content width, same left/right edges as the text and the top bar. */
+.c-right.bagwrap{position:relative;display:block;width:100%;aspect-ratio:1000/720}
+.bits{position:absolute;inset:0;width:100%;height:100%;display:block}
+@media (min-width:1141px){
+  .c-right.bagwrap{margin-right:0;align-self:stretch;aspect-ratio:auto;min-height:380px;
+    --fs1:calc((clamp(26px,3.34vw,48px) * 1.5 - 12px) * 1.4)}
+  .bits{top:calc(33px + var(--fs1) * .167);height:calc(100% - 33px - var(--fs1) * .167 - 4px)}
+}
+
+/* wide: the list sits on the bottom edge of the cover so the artwork's bottom edge lines up with its last row */
+@media (min-width:1141px){.cv{margin-top:auto}}
