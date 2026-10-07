@@ -1,0 +1,245 @@
+<!doctype html><html lang="en"><head><title>Headline Lab</title><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@1,400;1,500&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Fraunces:ital,opsz,wght@1,9..144,300;1,9..144,400&family=DM+Serif+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Satoshi";src:url(fonts/satoshi-500.woff2) format("woff2");font-weight:400 600}
+@font-face{font-family:"Satoshi";src:url(fonts/satoshi-700.woff2) format("woff2");font-weight:700}
+:root{--bg:#0a0a0a;--card:#111;--text:#f5f5f8;--muted:#9a9a9a;--line:rgba(255,255,255,.1);--acc:#69e0ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:500 14px/1.4 "Satoshi",system-ui,sans-serif;letter-spacing:-.01em;min-height:100vh}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 340px;min-height:100vh}
+.stage{padding:48px 40px;display:flex;flex-direction:column;justify-content:center;gap:28px;min-width:0}
+.hl{--fs:48px;font-size:var(--fs);line-height:1.2;letter-spacing:-.04em;font-weight:500}
+.hl .ln{display:block;white-space:nowrap}
+.slot{position:relative;display:inline-block;vertical-align:baseline}
+.slot .sizer{visibility:hidden;white-space:nowrap}
+.slot .clip{position:absolute;left:-.12em;right:-.12em;top:-.2em;bottom:-.2em;overflow:hidden;pointer-events:none}
+.slot .w{position:absolute;left:.12em;top:.2em;white-space:nowrap;will-change:transform,opacity,filter}
+.sf{font-family:var(--wf),"Songti SC","Noto Serif CJK SC","Hiragino Mincho ProN","Apple SD Gothic Neo",serif;font-style:italic;font-weight:400;letter-spacing:var(--wls,0);font-size:var(--ws,1.2em);line-height:1}
+.slot .w.dim{color:var(--dimc,var(--text))}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button{font:inherit;color:var(--text);background:#1a1a1a;border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:rgba(255,255,255,.3)}button.pri{background:var(--text);color:#000;border-color:var(--text)}
+.langtag{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);min-height:1.4em}
+.note{color:var(--muted);font-size:12px;max-width:620px}
+.panel{background:var(--card);border-left:1px solid var(--line);padding:20px;overflow:auto;max-height:100vh;position:sticky;top:0}
+.panel h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:18px 0 8px}
+.panel h2:first-child{margin-top:0}
+.row{display:grid;grid-template-columns:96px 1fr 48px;gap:8px;align-items:center;margin:8px 0}
+.row.s{grid-template-columns:96px 1fr}
+.row label{color:var(--muted);font-size:13px}.row output{font-size:12px;color:var(--text);text-align:right}
+select,input[type=range]{width:100%}select{background:#1a1a1a;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit}
+.pre{display:flex;gap:6px;flex-wrap:wrap}.pre button{padding:6px 10px;font-size:12px}
+textarea{width:100%;height:150px;background:#0a0a0a;color:#cfe;border:1px solid var(--line);border-radius:8px;padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace;resize:vertical}
+@media(max-width:900px){.app{grid-template-columns:1fr}.panel{position:static;max-height:none;border-left:0;border-top:1px solid var(--line)}.stage{padding:32px 20px}}
+</style></head><body>
+<div class="app">
+<main class="stage">
+  <div class="hl" id="hl">
+    <span class="ln">I shape <span class="slot" data-k="0"></span></span>
+    <span class="ln">I design with <span class="slot" data-k="1"></span></span>
+    <span class="ln">I ship with <span class="slot" data-k="2"></span></span>
+  </div>
+  <div class="langtag" id="langtag">&nbsp;</div>
+  <div class="bar"><button class="pri" id="play">▶ Replay</button><button id="loop">Loop: off</button><button id="freeze">Freeze on a language</button></div>
+  <p class="note">Pick an effect, drag the sliders until it feels right, then press <b>Copy settings</b> and send them to me. “Slow‑mo” lets you inspect a transition frame by frame.</p>
+</main>
+<aside class="panel">
+  <h2>Presets</h2>
+  <div class="pre" id="presets"></div>
+  <h2>Effect</h2>
+  <div class="row s"><label>Transition</label><select id="effect"></select></div>
+  <div class="row"><label>Easing</label><select id="ease" style="grid-column:2/4"></select></div>
+  <h2>Timing</h2>
+  <div class="row"><label>Step</label><input id="step" type="range" min="80" max="1200" step="10"><output></output></div>
+  <div class="row"><label>Transition %</label><input id="dur" type="range" min="20" max="100" step="5"><output></output></div>
+  <div class="row"><label>Slow down end</label><input id="decel" type="range" min="0" max="300" step="10"><output></output></div>
+  <div class="row"><label>Languages</label><input id="count" type="range" min="2" max="12" step="1"><output></output></div>
+  <div class="row"><label>Stagger</label><input id="stagger" type="range" min="0" max="800" step="20"><output></output></div>
+  <div class="row"><label>Slow‑mo</label><input id="slow" type="range" min="1" max="8" step="0.5"><output></output></div>
+  <div class="row s"><label>Words</label><select id="sync"><option value="together">Same language together</option><option value="independent">Each word on its own</option></select></div>
+  <div class="row s"><label>Order</label><select id="order"><option value="fixed">Fixed</option><option value="random">Random</option></select></div>
+  <h2>Look</h2>
+  <div class="row s"><label>Font</label><select id="font"></select></div>
+  <div class="row"><label>Word size</label><input id="size" type="range" min="90" max="150" step="2"><output></output></div>
+  <div class="row"><label>Tracking</label><input id="ls" type="range" min="-8" max="8" step="1"><output></output></div>
+  <div class="row"><label>Headline px</label><input id="fs" type="range" min="28" max="72" step="2"><output></output></div>
+  <div class="row"><label>Dim others</label><input id="dimo" type="range" min="30" max="100" step="5"><output></output></div>
+  <h2>Pointer glow (shows when the cursor rests)</h2>
+  <div class="row"><label>Size</label><input id="g_size" type="range" min="10" max="120" step="1"><output></output></div>
+  <div class="row"><label>Brightness</label><input id="g_intensity" type="range" min="0.5" max="40" step="0.5"><output></output></div>
+  <div class="row"><label>Wait to show</label><input id="g_wait" type="range" min="30" max="800" step="10"><output></output></div>
+  <div class="row"><label>Fade in</label><input id="g_fade" type="range" min="60" max="1200" step="10"><output></output></div>
+  <div class="row"><label>Core hardness</label><input id="g_hard" type="range" min="0" max="80" step="5"><output></output></div>
+  <div class="row"><label>Blue tint</label><input id="g_tint" type="range" min="0" max="100" step="5"><output></output></div>
+  <p class="note" style="margin-top:6px">Move the mouse anywhere on this page to feel it.</p>
+  <h2>Settings</h2>
+  <textarea id="out" readonly></textarea>
+  <div class="bar" style="margin-top:8px"><button id="copy">Copy settings</button></div>
+</aside>
+<script>
+window.GLOW={size:45,intensity:2,wait:50,fade:120,hard:45,tint:20};
+</script>
+</div>
+<script>
+(function(){
+/* index k is the same language in all three lists, so the three words can switch language together */
+var LANGS=["中文","日本語","Français","한국어","Español","Italiano","Português","Türkçe","हिन्दी","Deutsch","Русский","ไทย"];
+var DATA=[
+ {en:"ambiguity",l:"模糊性|曖昧さ|ambiguïté|모호함|ambigüedad|ambiguità|ambiguidade|belirsizlik|अस्पष्टता|Mehrdeutigkeit|неоднозначность|ความคลุมเครือ".split("|")},
+ {en:"taste",l:"品味|センス|goût|취향|gusto|gusto|gosto|zevk|रुचि|Geschmack|вкус|รสนิยม".split("|")},
+ {en:"code",l:"代码|コード|code|코드|código|codice|código|kod|कोड|Code|код|โค้ด".split("|")}];
+var EASES={"Smooth out":"cubic-bezier(.22,1,.36,1)","Ease in-out":"cubic-bezier(.65,0,.35,1)","Snappy":"cubic-bezier(.2,.9,.2,1)","Overshoot":"cubic-bezier(.34,1.56,.64,1)","Linear":"linear"};
+var FONTS={"Instrument Serif":'"Instrument Serif",Georgia,serif',"Playfair Display":'"Playfair Display",Georgia,serif',"Cormorant Garamond":'"Cormorant Garamond",Georgia,serif',"Fraunces":'"Fraunces",Georgia,serif',"DM Serif Display":'"DM Serif Display",Georgia,serif',"System serif":'Georgia,"Times New Roman",serif'};
+var FX={
+ "Fade":{i:[{opacity:0},{opacity:1}],o:[{opacity:1},{opacity:0}]},
+ "Slide up":{i:[{transform:"translateY(100%)",opacity:0},{transform:"none",opacity:1}],o:[{transform:"none",opacity:1},{transform:"translateY(-100%)",opacity:0}]},
+ "Slide down":{i:[{transform:"translateY(-100%)",opacity:0},{transform:"none",opacity:1}],o:[{transform:"none",opacity:1},{transform:"translateY(100%)",opacity:0}]},
+ "Rise (soft)":{i:[{transform:"translateY(.4em)",opacity:0,filter:"blur(6px)"},{transform:"none",opacity:1,filter:"blur(0)"}],o:[{transform:"none",opacity:1,filter:"blur(0)"},{transform:"translateY(-.4em)",opacity:0,filter:"blur(6px)"}]},
+ "Blur morph":{i:[{opacity:0,filter:"blur(14px)"},{opacity:1,filter:"blur(0)"}],o:[{opacity:1,filter:"blur(0)"},{opacity:0,filter:"blur(14px)"}]},
+ "Scale":{i:[{transform:"scale(.6)",opacity:0},{transform:"none",opacity:1}],o:[{transform:"none",opacity:1},{transform:"scale(1.3)",opacity:0}]},
+ "Veil wipe":{i:[{clipPath:"inset(0 100% 0 0)"},{clipPath:"inset(0 0 0 0)"}],o:[{clipPath:"inset(0 0 0 0)"},{clipPath:"inset(0 0 0 100%)"}]},
+ "Track":{i:[{letterSpacing:".4em",opacity:0},{letterSpacing:"0em",opacity:1}],o:[{letterSpacing:"0em",opacity:1},{letterSpacing:"-.08em",opacity:0}]},
+ "Flip":{i:[{transform:"perspective(500px) rotateX(-90deg)",opacity:0},{transform:"perspective(500px) rotateX(0)",opacity:1}],o:[{transform:"perspective(500px) rotateX(0)",opacity:1},{transform:"perspective(500px) rotateX(90deg)",opacity:0}]},
+ "Glitch":{i:[{opacity:0,transform:"translateX(-.1em)",clipPath:"inset(10% 0 60% 0)"},{opacity:1,transform:"translateX(.08em)",clipPath:"inset(55% 0 5% 0)",offset:.35},{opacity:1,transform:"translateX(-.04em)",clipPath:"inset(0 0 0 0)",offset:.7},{opacity:1,transform:"none",clipPath:"inset(0 0 0 0)"}],o:[{opacity:1},{opacity:0}]},
+ "Scramble":{scramble:true}
+};
+var PRESETS={
+ "Soft rise":{effect:"Rise (soft)",ease:"Smooth out",step:420,dur:70,decel:120,count:9,stagger:120,font:"Instrument Serif",size:120,ls:0,fs:48,dimo:55},
+ "Rapid roll":{effect:"Slide up",ease:"Snappy",step:150,dur:80,decel:200,count:9,stagger:80,font:"Instrument Serif",size:120,ls:0,fs:48,dimo:100},
+ "Veil wipe":{effect:"Veil wipe",ease:"Ease in-out",step:520,dur:65,decel:60,count:7,stagger:160,font:"Playfair Display",size:112,ls:0,fs:48,dimo:70},
+ "Decode":{effect:"Scramble",ease:"Linear",step:480,dur:75,decel:100,count:6,stagger:100,font:"Fraunces",size:112,ls:0,fs:48,dimo:100},
+ "Current site":{effect:"Fade",ease:"Linear",step:500,dur:32,decel:0,count:9,stagger:0,font:"Instrument Serif",size:120,ls:0,fs:48,dimo:100}
+};
+var $=function(id){return document.getElementById(id)};
+var S=JSON.parse(JSON.stringify(PRESETS["Soft rise"])),slow=1,order="fixed",looping=false,timers=[],anims=[],raf=[];
+S.slow=1;S.order="fixed";S.sync="together";
+var hl=$("hl"),slots=[].slice.call(document.querySelectorAll(".slot"));
+function fill(sel,obj){Object.keys(obj).forEach(function(k){var o=document.createElement("option");o.value=k;o.textContent=k;sel.appendChild(o)})}
+fill($("effect"),FX);fill($("ease"),EASES);fill($("font"),FONTS);
+Object.keys(PRESETS).forEach(function(n){var b=document.createElement("button");b.textContent=n;b.onclick=function(){Object.assign(S,PRESETS[n]);sync();layout();play()};$("presets").appendChild(b)});
+var ctl=["step","dur","decel","count","stagger","slow","size","ls","fs","dimo"];
+var fmt={step:"ms",dur:"%",decel:"%",count:"",stagger:"ms",slow:"×",size:"%",ls:"",fs:"px",dimo:"%"};
+function sync(){
+  ["effect","ease","font","order","sync"].forEach(function(k){$(k).value=S[k]});
+  ctl.forEach(function(k){var e=$(k);e.value=S[k];e.parentNode.querySelector("output").textContent=S[k]+fmt[k]});
+  hl.style.setProperty("--fs",S.fs+"px");hl.style.setProperty("--ws",(S.size/100*1)+"em");
+  hl.style.setProperty("--wf",FONTS[S.font]);hl.style.setProperty("--wls",(S.ls/100)+"em");
+  hl.style.setProperty("--dimc","rgba(245,245,248,"+(S.dimo/100)+")");
+  var o={};Object.keys(S).forEach(function(k){o[k]=S[k]});o.glow=window.GLOW;$("out").value=JSON.stringify(o,null,2);
+}
+[].concat(ctl).forEach(function(k){$(k).addEventListener("input",function(){S[k]=parseFloat(this.value);sync();if(k==="size"||k==="fs"||k==="ls")layout()})});
+["effect","ease","font","order","sync"].forEach(function(k){$(k).addEventListener("change",function(){S[k]=this.value;sync();layout();play()})});
+/* slot geometry: sizer holds the widest word so nothing around the slot ever moves */
+function layout(){
+  slots.forEach(function(sl,i){
+    sl.innerHTML="";
+    var sz=document.createElement("span");sz.className="sizer sf";
+    var cl=document.createElement("span");cl.className="clip";
+    sl.appendChild(sz);sl.appendChild(cl);
+    var words=[DATA[i].en].concat(DATA[i].l),best=DATA[i].en,w=0;
+    words.forEach(function(t){sz.textContent=t;var x=sz.getBoundingClientRect().width;if(x>w){w=x;best=t}});
+    sz.textContent=best;sl._clip=cl;
+    var d=document.createElement("span");d.className="w sf";d.textContent=DATA[i].en;cl.appendChild(d);sl._cur=d;
+  });
+}
+function clear(){timers.forEach(clearTimeout);timers=[];raf.forEach(cancelAnimationFrame);raf=[];anims.forEach(function(a){try{a.cancel()}catch(e){}});anims=[]}
+var shared=[];
+function langOrder(n){
+  var idx=[];for(var k=0;k<DATA[0].l.length;k++)idx.push(k);
+  if(S.order==="random"){for(var j=idx.length-1;j>0;j--){var r=Math.floor(Math.random()*(j+1));var t=idx[j];idx[j]=idx[r];idx[r]=t}}
+  return idx.slice(0,n);
+}
+function pick(i){
+  if(S.sync==="together")return shared.map(function(k){return DATA[i].l[k]});
+  var l=DATA[i].l.slice(),n=S.count;
+  if(S.order==="random"){for(var j=l.length-1;j>0;j--){var k=Math.floor(Math.random()*(j+1));var t=l[j];l[j]=l[k];l[k]=t}}
+  else{var off=i*3;l=l.slice(off%l.length).concat(l.slice(0,off%l.length))}
+  return l.slice(0,n);
+}
+var GL="abcdefghijklmnopqrstuvwxyz模糊曖昧味品코드код";
+function scramble(el,text,ms,fin){
+  var t0=performance.now();
+  (function f(now){var p=Math.min(1,(now-t0)/ms),out="";
+    for(var i=0;i<text.length;i++)out+=(i<text.length*p)?text[i]:GL[Math.floor(Math.random()*GL.length)];
+    el.textContent=out;if(p<1)raf.push(requestAnimationFrame(f));else el.textContent=text})(t0);
+}
+function swap(sl,text,final,gap){
+  var fx=FX[S.effect],dur=Math.max(60,gap*S.dur/100)*S.slow,ease=EASES[S.ease];
+  var old=sl._cur,w=document.createElement("span");w.className="w sf"+(final?"":" dim");w.textContent=text;
+  sl._clip.appendChild(w);sl._cur=w;
+  if(fx.scramble){
+    w.textContent="";scramble(w,text,dur,final);
+    if(old){var a=old.animate([{opacity:1},{opacity:0}],{duration:dur*.35,fill:"forwards"});anims.push(a);a.onfinish=function(){old.remove()}}
+  }else{
+    var a1=w.animate(fx.i,{duration:dur,easing:ease,fill:"both"});anims.push(a1);
+    if(old){var a2=old.animate(fx.o,{duration:dur,easing:ease,fill:"forwards"});anims.push(a2);a2.onfinish=function(){old.remove()}}
+  }
+}
+function play(){
+  clear();layout();
+  var together=S.sync==="together",stg=together?0:S.stagger,tag=$("langtag");
+  shared=together?langOrder(S.count):[];tag.innerHTML="&nbsp;";
+  slots.forEach(function(sl,i){
+    var seq=pick(i),t=420*S.slow+i*stg*S.slow,n=seq.length;
+    seq.forEach(function(wd,k){
+      var gap=S.step*(1+S.decel/100*3*Math.pow(k/Math.max(1,n),2))*S.slow;
+      timers.push(setTimeout(function(){swap(sl,wd,false,gap);if(together&&i===0)tag.textContent=LANGS[shared[k]]},t));t+=gap;
+    });
+    timers.push(setTimeout(function(){swap(sl,DATA[i].en,true,S.step*1.4*S.slow);if(together&&i===0)tag.textContent="English"},t));
+  });
+  var total=420*S.slow+(slots.length-1)*stg*S.slow+S.step*(S.count+S.decel/100*S.count)*S.slow+S.step*3*S.slow;
+  if(looping)timers.push(setTimeout(play,total+1200));
+}
+$("play").onclick=play;
+$("loop").onclick=function(){looping=!looping;this.textContent="Loop: "+(looping?"on":"off");if(looping)play()};
+$("freeze").onclick=function(){clear();layout();var i=0;var langs=[1,2,3];slots.forEach(function(sl,i){sl._cur.textContent=DATA[i].l[0];sl._cur.classList.add("dim")})};
+$("copy").onclick=function(){var t=$("out").value;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){$("copy").textContent="Copied ✓"},function(){$("out").select();document.execCommand("copy");$("copy").textContent="Copied ✓"});setTimeout(function(){$("copy").textContent="Copy settings"},1500)};
+sync();
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){layout();play()});
+window.__lab={S:S,play:play,sync:sync,layout:layout,FX:FX};
+})();
+</script><script>
+/* glow engine: identical to the home page, driven by the sliders in the panel */
+(function(){
+  if(!matchMedia('(hover:hover) and (pointer:fine)').matches||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  var c=document.createElement('canvas');c.className='glow';c.setAttribute('aria-hidden','true');document.body.appendChild(c);
+  var x=c.getContext('2d'),W=0,H=0,dpr=1,raf=0,px=-999,py=-999,vis=0,target=0,timer=0,prev=0;
+  function fit(){dpr=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;paint()}
+  function paint(){
+    var G=window.GLOW;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);if(vis<=.002)return;
+    var tr=Math.round(255-(255-105)*G.tint/100),tg=Math.round(255-(255-224)*G.tint/100),al=(G.intensity/100)*vis,hard=G.hard/100,r=G.size;
+    var g=x.createRadialGradient(px,py,0,px,py,r);
+    g.addColorStop(0,'rgba('+tr+','+tg+',255,'+al.toFixed(4)+')');
+    if(hard>0)g.addColorStop(hard,'rgba('+tr+','+tg+',255,'+(al*.8).toFixed(4)+')');
+    g.addColorStop(1,'rgba('+tr+','+tg+',255,0)');
+    x.fillStyle=g;x.fillRect(px-r,py-r,r*2,r*2);
+  }
+  function tick(now){
+    raf=0;var dt=Math.min(.05,(now-prev)/1000);prev=now;var G=window.GLOW;
+    /* appears gently, leaves quickly */
+    if(target>vis)vis=Math.min(target,vis+dt*1000/Math.max(60,G.fade));else vis=Math.max(target,vis-dt*1000/110);
+    paint();
+    if(vis!==target)raf=requestAnimationFrame(tick);
+  }
+  function kick(){if(!raf){prev=performance.now();raf=requestAnimationFrame(tick)}}
+  function move(e){
+    px=e.clientX;py=e.clientY;target=0;kick();clearTimeout(timer);
+    timer=setTimeout(function(){target=1;kick()},window.GLOW.wait);
+  }
+  addEventListener('pointermove',move,{passive:true});
+  document.addEventListener('mouseleave',function(){clearTimeout(timer);target=0;kick()});
+  addEventListener('resize',fit);fit();
+})();
+
+(function(){
+  var fmt={size:"px",intensity:"%",wait:"ms",fade:"ms",hard:"%",tint:"%"};
+  Object.keys(fmt).forEach(function(k){
+    var el=document.getElementById("g_"+k);if(!el)return;
+    function show(){el.value=window.GLOW[k];el.parentNode.querySelector("output").textContent=window.GLOW[k]+fmt[k]}
+    el.addEventListener("input",function(){window.GLOW[k]=parseFloat(el.value);show();if(window.__lab)window.__lab.sync()});show();
+  });
+  if(window.__lab)window.__lab.sync();
+})();
+</script>
+</body></html>
