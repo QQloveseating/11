@@ -145,13 +145,47 @@
       setWord(s,s.en);s.aw.style.opacity=1;win.remove();s.el.classList.add('fin');
     };
   }
-  /* the three words start a beat apart, so they never move in lockstep */
+  /* ---- short hop: a new word slides up half a line while the old one slides away, overlapping, so it reads as one rolling motion ---- */
+  var HOP_EASE='cubic-bezier(.3,.6,.4,1)';
+  function hop(s,text,gap,final,land){
+    var old=s.aw,nw=document.createElement('span');nw.className='aw';nw.textContent=text;
+    nw.style.fontSize=(.97*scriptScale(text)).toFixed(3)+'em';s.el.appendChild(nw);
+    var dur=final?land:Math.round(gap*1.3),tgt=final?1:DIM,rise=final?'.6em':'.5em';
+    nw._o=tgt;
+    var a1=nw.animate([{opacity:0,transform:'translateY('+rise+')',filter:'blur(2.5px)'},{opacity:tgt,transform:'translateY(0)',filter:'blur(0)'}],{duration:dur,easing:final?'cubic-bezier(.2,.8,.2,1)':HOP_EASE,fill:'forwards'});
+    anims.push(a1);
+    if(old&&old.textContent){
+      var a2=old.animate([{opacity:old._o||1,transform:'translateY(0)',filter:'blur(0)'},{opacity:0,transform:'translateY(-.5em)',filter:'blur(2.5px)'}],{duration:Math.round(dur*.8),easing:HOP_EASE,fill:'forwards'});
+      anims.push(a2);a2.onfinish=function(){old.remove()};
+    }else if(old){old.remove()}
+    s.aw=nw;
+  }
+  var VARIANTS={
+    1:{type:'reel'},
+    2:{type:'hop',nf:12,g0:115,g1:175,stagger:90,land:420},
+    3:{type:'hop',nf:6,g0:130,g1:200,seq:true,land:420}
+  };
+  window.ROLL=window.ROLL||{v:2};
   function startCycles(t0){
+    var V=VARIANTS[window.ROLL.v]||VARIANTS[2],tEndPrev=t0;
     slots.forEach(function(s,si){
       s.el.classList.remove('fin');
-      later((function(s,si){return function(){startReel(s,si)}})(s,si),t0+REEL[si%REEL.length].off);
+      if(V.type==='reel'){later((function(s,si){return function(){startReel(s,si)}})(s,si),t0+REEL[si%REEL.length].off);return}
+      var t=V.seq?tEndPrev:t0+si*V.stagger;
+      for(var k=0;k<V.nf;k++){
+        var gap=V.g0+(V.g1-V.g0)*Math.pow(k/Math.max(1,V.nf-1),2);
+        later((function(s,w,g){return function(){hop(s,w,g,false,0)}})(s,s.words[(k+si*3)%s.words.length],gap),t);
+        t+=gap;
+      }
+      later((function(s){return function(){hop(s,s.en,0,true,V.land)}})(s),t);
+      later((function(s){return function(){s.el.classList.add('fin')}})(s),t+V.land);
+      tEndPrev=t+V.land*.6;
     });
   }
+  /* preview only: press 1, 2 or 3 to replay the headline with another rolling style (remove before launch) */
+  addEventListener('keydown',function(e){
+    if(e.metaKey||e.ctrlKey||e.altKey)return;var k=e.key;if(k==='1'||k==='2'||k==='3'){window.ROLL.v=+k;run()}
+  });
   var last=null;
   function place(){
     if(last){
