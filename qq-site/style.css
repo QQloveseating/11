@@ -448,3 +448,9 @@ a.who{cursor:pointer}
 /* cards share the cover's side gutters on smaller screens so their edges line up with the text above */
 @media (max-width:1140px){.wrap{padding-left:56px;padding-right:56px}}
 @media (max-width:720px){.wrap{padding-left:24px;padding-right:24px}}
+
+/* the line above the covers glides up from further down, softening into focus, and arrives just before the first cover */
+.more.rv{transition:opacity .9s ease,transform .9s cubic-bezier(.2,.7,.2,1),filter .9s ease}
+.more.rv:not(.in){transform:translateY(40px);filter:blur(6px)}
+.more+.proj.rv{transition-delay:.2s}
+@media (prefers-reduced-motion:reduce){.more.rv:not(.in){transform:none;filter:none}}
