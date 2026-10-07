@@ -157,52 +157,32 @@
   var rt;addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){
     if(root.querySelector('.ac.fin')||reduce){sizeSlots();calibrate();slots.forEach(function(s){setWord(s,s.en);s.aw.style.opacity=1})}},150)});
 })();
-/* open bag drawn in flickering 0/1 digits */
+/* a bag drawn in flickering 0/1 digits: front first, then it opens */
 (function(){
   var cv=document.getElementById('bits');if(!cv)return;
   var ctx=cv.getContext('2d'),off=document.createElement('canvas'),octx=off.getContext('2d',{willReadFrequently:true});
   var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  var CW=5.5,CH=8,W=0,H=0,cols=0,rows=0,tone=null,ch=null,mx=-99,my=-99,t0=performance.now(),last=0,dpr=1;
+  var CW=5.5,CH=8,W=0,H=0,cols=0,rows=0,toneA=null,toneB=null,ch=null,rnd=null,tStart=performance.now(),mx=-99,my=-99,t0=performance.now(),last=0,dpr=1;
   function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
   function ell(c,x,y,a,b){c.beginPath();c.ellipse(x,y,a,b,0,0,Math.PI*2)}
-  /* the bag is drawn in a 1000 x 700 space with white on black; brightness decides how many digits a cell gets */
-  function drawBag(c,w,h){
+  /* front of a tote: two nested handles, flat body, soft folds, small mark */
+  function drawFront(c,w,h){
     c.setTransform(1,0,0,1,0,0);c.fillStyle='#000';c.fillRect(0,0,w,h);
-    /* outline stretches to the box; the things inside keep their proportions */
-    c.setTransform(w/1000,0,0,h/700,0,0);c.lineCap='round';c.lineJoin='round';
+    var u=w/1000,v=u*CW/CH;c.setTransform(u,0,0,v,0,(h-1300*v)/2);c.lineCap='round';c.lineJoin='round';
     function S(a,lw){c.strokeStyle='rgba(255,255,255,'+a+')';c.lineWidth=lw*1.35;c.stroke()}
     function F(a){c.fillStyle='rgba(255,255,255,'+a+')';c.fill()}
-    /* handles (front and back) */
-    [[330,0],[590,0]].forEach(function(h){
-      c.beginPath();c.moveTo(h[0],175);c.bezierCurveTo(h[0]-30,40,h[0]+110,40,h[0]+80,175);S(.9,13);
-      c.beginPath();c.moveTo(h[0]+8,560);c.bezierCurveTo(h[0]-20,690,h[0]+100,690,h[0]+72,560);S(.55,12);
-    });
-    /* body */
-    rr(c,60,160,880,400,150);S(.8,15);
-    /* open mouth: lens with a zipper band */
-    c.beginPath();c.moveTo(88,360);c.bezierCurveTo(250,170,750,170,912,360);c.bezierCurveTo(750,545,250,545,88,360);c.closePath();
-    c.fillStyle='#000';c.fill();S(.95,15);
-    c.beginPath();c.moveTo(122,360);c.bezierCurveTo(270,205,730,205,878,360);S(.45,7);
-    c.beginPath();c.moveTo(122,360);c.bezierCurveTo(270,515,730,515,878,360);S(.45,7);
-    /* things inside the bag */
-    c.setTransform(w/1000,0,0,w/1000*CW/CH,0,(h-w/1000*CW/CH*700)/2);
-    rr(c,300,268,112,62,20);S(.95,11);rr(c,436,268,112,62,20);S(.95,11);   /* glasses */
-    c.beginPath();c.moveTo(412,286);c.lineTo(436,286);S(.95,9);
-    rr(c,150,250,86,160,20);F(.6);S(.95,11);                              /* phone */
-    ell(c,176,282,12,12);S(.95,8);ell(c,176,314,12,12);S(.95,8);
-    ell(c,700,300,56,22);F(.65);S(.95,10);rr(c,648,308,104,44,10);F(.65);S(.95,10);ell(c,700,360,86,13);S(.95,9);   /* cup + saucer */
-    c.beginPath();c.arc(790,310,26,-1.2,1.2);S(.95,7);
-    rr(c,452,372,112,112,6);F(.5);S(.95,10);rr(c,466,386,84,64,4);S(.7,7);ell(c,508,418,18,22);F(.7);   /* polaroid */
-    c.beginPath();c.moveTo(372,312);c.lineTo(352,470);S(.95,8);                     /* pen */
-    ell(c,620,480,18,18);S(.95,8);rr(c,602,498,36,46,8);F(.6);S(.95,7);             /* small figure */
-    rr(c,106,372,34,104,10);F(.8);S(.95,8);                                        /* tube */
-    rr(c,196,448,74,104,16);F(.5);S(.95,9);                                         /* bottle */
-    ell(c,732,448,44,38);S(.9,7);ell(c,732,448,26,22);S(.9,6);                       /* earphones */
-    c.beginPath();c.moveTo(758,422);c.bezierCurveTo(800,390,820,380,836,396);S(.9,6);
-    ell(c,700,402,8,8);F(.95);ell(c,846,404,9,9);F(.95);
+    c.beginPath();c.moveTo(300,560);c.bezierCurveTo(250,20,750,20,700,560);S(.95,15);
+    c.beginPath();c.moveTo(385,560);c.bezierCurveTo(370,250,630,250,615,560);S(.9,14);
+    c.beginPath();c.moveTo(70,560);c.lineTo(930,560);c.bezierCurveTo(960,800,925,1040,880,1190);c.bezierCurveTo(720,1260,280,1260,120,1190);c.bezierCurveTo(75,1040,40,800,70,560);c.closePath();S(.95,17);
+    c.beginPath();c.moveTo(78,600);c.bezierCurveTo(400,640,600,640,922,600);S(.5,8);
+    c.beginPath();c.moveTo(215,720);c.bezierCurveTo(280,900,235,1040,285,1170);S(.45,8);
+    c.beginPath();c.moveTo(785,720);c.bezierCurveTo(720,900,765,1040,715,1170);S(.45,8);
+    c.beginPath();c.moveTo(130,1150);c.bezierCurveTo(330,1215,670,1215,870,1150);S(.4,7);
+    rr(c,455,1060,90,16,8);F(.9);
+    c.beginPath();c.moveTo(332,560);c.lineTo(332,600);S(.8,10);c.beginPath();c.moveTo(668,560);c.lineTo(668,600);S(.8,10);
   }
-  /* tall box: a bag standing up with its top open and things poking out */
-  function drawPortrait(c,w,h){
+  /* open bag: outline in digits, contents seen through it */
+  function drawOpen(c,w,h){
     c.setTransform(1,0,0,1,0,0);c.fillStyle='#000';c.fillRect(0,0,w,h);
     var u=w/1000,v=u*CW/CH;c.setTransform(u,0,0,v,0,(h-1300*v)/2);c.lineCap='round';c.lineJoin='round';
     function S(a,lw){c.strokeStyle='rgba(255,255,255,'+a+')';c.lineWidth=lw*1.35;c.stroke()}
@@ -224,17 +204,22 @@
     rr(c,420,960,46,150,14);F(.7);S(.95,9);                                                                                       /* tube */
     ell(c,720,1020,66,52);S(.9,8);ell(c,720,1020,38,30);S(.9,7);c.beginPath();c.moveTo(752,992);c.bezierCurveTo(800,950,830,940,846,960);S(.9,7);ell(c,690,968,10,10);F(.95);ell(c,852,966,10,10);F(.95); /* earphones */
   }
-  /* paint at 2x, then crop to the ink so the artwork touches all four edges of its box */
-  function paint(){
+  function tonesFrom(fn){
     var tc=document.createElement('canvas');tc.width=cols*2;tc.height=rows*2;var t=tc.getContext('2d',{willReadFrequently:true});
-    (H>W*.95?drawPortrait:drawBag)(t,tc.width,tc.height);
+    fn(t,tc.width,tc.height);
     var id=t.getImageData(0,0,tc.width,tc.height).data,x0=1e9,y0=1e9,x1=-1,y1=-1;
     for(var y=0;y<tc.height;y++)for(var x=0;x<tc.width;x++)if(id[(y*tc.width+x)*4]>70){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
     octx.setTransform(1,0,0,1,0,0);octx.fillStyle='#000';octx.fillRect(0,0,cols,rows);
+    /* crop to the ink so the artwork touches all four edges of its box */
     octx.drawImage(tc,x0,y0,x1-x0+1,y1-y0+1,0,0,cols,rows);
-    var d=octx.getImageData(0,0,cols,rows).data;
-    tone=new Float32Array(cols*rows);ch=new Uint8Array(cols*rows);
-    for(var i=0;i<tone.length;i++){tone[i]=d[i*4]/255;ch[i]=Math.random()<.5?1:0}
+    var d=octx.getImageData(0,0,cols,rows).data,a=new Float32Array(cols*rows);
+    for(var i=0;i<a.length;i++)a[i]=d[i*4]/255;
+    return a;
+  }
+  function paint(){
+    toneA=tonesFrom(drawFront);toneB=tonesFrom(drawOpen);
+    ch=new Uint8Array(cols*rows);rnd=new Float32Array(cols*rows);
+    for(var i=0;i<ch.length;i++){ch[i]=Math.random()<.5?1:0;rnd[i]=Math.random()}
   }
   function size(){
     dpr=Math.min(2,window.devicePixelRatio||1);
@@ -243,18 +228,32 @@
     cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
     off.width=cols;off.height=rows;paint();draw(performance.now());
   }
+  /* timeline: the front of the bag, a pause, then the digits flow into the open bag and stay there */
+  var HOLD=2200,MORPH=1700;
+  function progress(now){
+    if(reduce)return 1;
+    var e=now-tStart;if(e<HOLD)return 0;if(e>=HOLD+MORPH)return 1;
+    var x=(e-HOLD)/MORPH;return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+  }
   var BK=8;
   function draw(now){
-    var t=(now-t0)/1000;
+    var t=(now-t0)/1000,p=progress(now);
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
     ctx.font='500 '+Math.round(CH*.8)+'px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';ctx.textBaseline='middle';ctx.textAlign='center';
     var band=((t*.16)%1.3-.15)*rows,buckets=[];for(var k=0;k<BK;k++)buckets.push([]);
+    var moving=p>0&&p<1;
     for(var y=0;y<rows;y++){
       for(var x=0;x<cols;x++){
-        var i=y*cols+x,b=tone[i];if(b<.07)continue;
+        var i=y*cols+x,thr=(.55*(y/rows)+.45*rnd[i])*.92,useB=p>thr;
+        var b=useB?toneB[i]:toneA[i];
+        /* cells that are just changing over flare up, so the shape visibly dissolves and re-forms */
+        var spark=moving&&Math.abs(p-thr)<.1;
+        if(b<.07&&!spark)continue;
+        if(b<.07)b=.35*(1-Math.abs(p-thr)/.1)*(toneA[i]>.07||toneB[i]>.07?1:0);
+        if(b<.07)continue;
         var near=Math.hypot(x-mx,(y-my)*1.5),boost=near<9?1-near/9:0;
-        if(!reduce&&Math.random()<.05+boost*.5)ch[i]^=1;
-        var a=Math.pow(b,.5)*(.7+.3*Math.random())+boost*.5;
+        if(!reduce&&(spark||Math.random()<.05+boost*.5))ch[i]^=1;
+        var a=Math.pow(b,.5)*(.7+.3*Math.random())+boost*.5+(spark?.35:0);
         var dy=Math.abs(y-band);if(dy<5)a+=.4*(1-dy/5)*b;
         if(!reduce&&Math.random()<.003)a=1;
         a=Math.min(1,Math.max(.1,a));
@@ -270,6 +269,7 @@
   function frame(now){if(now-last>48){last=now;draw(now)}requestAnimationFrame(frame)}
   cv.parentNode.addEventListener('pointermove',function(e){var r=cv.getBoundingClientRect();mx=(e.clientX-r.left)/CW;my=(e.clientY-r.top)/CH});
   cv.parentNode.addEventListener('pointerleave',function(){mx=my=-99});
+  cv.parentNode.addEventListener('click',function(){tStart=performance.now()});   /* click to replay from the front */
   var rt;new ResizeObserver(function(){clearTimeout(rt);rt=setTimeout(size,80)}).observe(cv);
   size();if(!reduce)requestAnimationFrame(frame);
 })();

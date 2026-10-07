@@ -405,7 +405,8 @@ a.who{cursor:pointer}
 /* cover right: open bag drawn from flickering 0/1 digits on black.
    wide: top = cap-height of "Hi I'm QQ", bottom = baseline of the last list row, right = right edge of "Get In Touch".
    stacked: full content width, same left/right edges as the text and the top bar. */
-.c-right.bagwrap{position:relative;display:block;width:100%;aspect-ratio:1000/720}
+.c-right.bagwrap{position:relative;display:block;width:100%;aspect-ratio:1000/1060}
+@media (min-width:721px) and (max-width:1140px){.c-right.bagwrap{max-width:560px;margin-left:auto}}
 .bits{position:absolute;inset:0;width:100%;height:100%;display:block}
 @media (min-width:1141px){
   .c-right.bagwrap{margin-right:0;align-self:stretch;aspect-ratio:auto;min-height:380px;
