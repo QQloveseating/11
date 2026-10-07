@@ -313,40 +313,37 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
 })();
 </script>
 <script>try{history.scrollRestoration="manual"}catch(e){}</script><script>
-/* pointer glow: a small soft light under the cursor that leaves a short fading trail.
-   every number below is adjustable from lab.html (it writes window.GLOW) */
-window.GLOW=Object.assign({size:45,intensity:1,life:520,taper:35,hard:45,tint:20,spacing:3},window.GLOW||{});
+/* pointer glow: a soft light that appears under the cursor when it comes to rest and disappears the moment it moves.
+   every number below is adjustable from the tuner panel (press T) */
+window.GLOW=Object.assign({size:45,intensity:5,wait:160,fade:350,hard:45,tint:20},window.GLOW||{});
 (function(){
   if(!matchMedia('(hover:hover) and (pointer:fine)').matches||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   var c=document.createElement('canvas');c.className='glow';c.setAttribute('aria-hidden','true');document.body.appendChild(c);
-  var x=c.getContext('2d'),W=0,H=0,dpr=1,pts=[],raf=0,lx=null,ly=null;
-  function fit(){dpr=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr}
-  function add(px,py,now){pts.push({x:px,y:py,t:now});if(pts.length>400)pts.shift()}
-  function move(e){
-    var G=window.GLOW,now=performance.now();
-    if(lx!==null){
-      var dx=e.clientX-lx,dy=e.clientY-ly,d=Math.hypot(dx,dy),n=Math.floor(d/Math.max(2,G.spacing));
-      for(var i=1;i<=n;i++)add(lx+dx*i/(n+1),ly+dy*i/(n+1),now);       /* fill the gap on fast moves so the trail stays smooth */
-    }
-    add(e.clientX,e.clientY,now);lx=e.clientX;ly=e.clientY;
-    if(!raf)raf=requestAnimationFrame(draw);
+  var x=c.getContext('2d'),W=0,H=0,dpr=1,raf=0,px=-999,py=-999,vis=0,target=0,timer=0,prev=0;
+  function fit(){dpr=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;paint()}
+  function paint(){
+    var G=window.GLOW;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);if(vis<=.002)return;
+    var tr=Math.round(255-(255-105)*G.tint/100),tg=Math.round(255-(255-224)*G.tint/100),al=(G.intensity/100)*vis,hard=G.hard/100,r=G.size;
+    var g=x.createRadialGradient(px,py,0,px,py,r);
+    g.addColorStop(0,'rgba('+tr+','+tg+',255,'+al.toFixed(4)+')');
+    if(hard>0)g.addColorStop(hard,'rgba('+tr+','+tg+',255,'+(al*.8).toFixed(4)+')');
+    g.addColorStop(1,'rgba('+tr+','+tg+',255,0)');
+    x.fillStyle=g;x.fillRect(px-r,py-r,r*2,r*2);
   }
-  function draw(now){
-    var G=window.GLOW;raf=0;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
-    while(pts.length&&now-pts[0].t>G.life)pts.shift();
-    var tr=Math.round(255-(255-105)*G.tint/100),tg=Math.round(255-(255-224)*G.tint/100),tb=255,hard=G.hard/100,tp=G.taper/100;
-    for(var i=0;i<pts.length;i++){
-      var p=pts[i],k=1-(now-p.t)/G.life,r=G.size*((1-tp)+tp*k),g=x.createRadialGradient(p.x,p.y,0,p.x,p.y,r),al=(G.intensity/100)*k*k;
-      g.addColorStop(0,'rgba('+tr+','+tg+','+tb+','+al.toFixed(3)+')');
-      if(hard>0)g.addColorStop(hard,'rgba('+tr+','+tg+','+tb+','+(al*.8).toFixed(3)+')');
-      g.addColorStop(1,'rgba('+tr+','+tg+','+tb+',0)');
-      x.fillStyle=g;x.fillRect(p.x-r,p.y-r,r*2,r*2);
-    }
-    if(pts.length)raf=requestAnimationFrame(draw);
+  function tick(now){
+    raf=0;var dt=Math.min(.05,(now-prev)/1000);prev=now;var G=window.GLOW;
+    /* appears gently, leaves quickly */
+    if(target>vis)vis=Math.min(target,vis+dt*1000/Math.max(60,G.fade));else vis=Math.max(target,vis-dt*1000/110);
+    paint();
+    if(vis!==target)raf=requestAnimationFrame(tick);
+  }
+  function kick(){if(!raf){prev=performance.now();raf=requestAnimationFrame(tick)}}
+  function move(e){
+    px=e.clientX;py=e.clientY;target=0;kick();clearTimeout(timer);
+    timer=setTimeout(function(){target=1;kick()},window.GLOW.wait);
   }
   addEventListener('pointermove',move,{passive:true});
-  addEventListener('pointerleave',function(){lx=ly=null});
-  document.addEventListener('mouseleave',function(){lx=ly=null});
+  document.addEventListener('mouseleave',function(){clearTimeout(timer);target=0;kick()});
   addEventListener('resize',fit);fit();
 })();
 </script>
@@ -354,7 +351,7 @@ window.GLOW=Object.assign({size:45,intensity:1,life:520,taper:35,hard:45,tint:20
 <script>
 (function(){
   var SPEC=[
-    ['Pointer glow','GLOW',[['size','Size','px',6,80,1],['intensity','Brightness','%',1,80,1],['life','Trail length','ms',80,1600,20],['taper','Tail shrink','%',0,90,5],['hard','Core hardness','%',0,80,5],['tint','Blue tint','%',0,100,5],['spacing','Trail density','px',2,24,1]]],
+    ['Pointer glow (shows when the cursor rests)','GLOW',[['size','Size','px',10,120,1],['intensity','Brightness','%',0.5,40,0.5],['wait','Wait before showing','ms',40,800,20],['fade','Fade in','ms',80,1200,20],['hard','Core hardness','%',0,80,5],['tint','Blue tint','%',0,100,5]]],
     ['Cube and tree','BITS',[['hold','Hold each shape','ms',800,8000,100],['morph','Change time','ms',600,5000,100],['spinCube','Cube spin','',0,150,5],['spinTree','Tree spin','',0,150,5],['size','Digit size','%',60,180,5],['dent','Pointer dent','px',0,120,2]]]
   ];
   var DEF=JSON.parse(JSON.stringify({GLOW:window.GLOW,BITS:window.BITS}));
