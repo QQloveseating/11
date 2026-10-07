@@ -229,8 +229,10 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
     P.outline(-.2,-ph+.25,.17,.17,.05,-pt,50);P.ring(-.26,-ph+.18,.06,-pt,22);P.ring(-.26,-ph+.34,.06,-pt,22);P.ring(-.12,-ph+.26,.045,-pt,18);   /* camera module */
     P.ring(0,-.05,.1,-pt,34);P.fill(0,.1,pw-.06,ph-.12,-pt,120);
     pack(P.L,A);
+    (function(){var R=-.36,Pt=.3,cR=Math.cos(R),sR=Math.sin(R),cP=Math.cos(Pt),sP=Math.sin(Pt),K=1.07;
+      for(var k=0;k<N;k++){var x=A[k*3],y=A[k*3+1],z=A[k*3+2],x1=x*cR-y*sR,y1=x*sR+y*cR,y2=y1*cP-z*sP,z2=y1*sP+z*cP;A[k*3]=x1*K;A[k*3+1]=y2*K;A[k*3+2]=z2*K}})();
     /* ---- laptop: thick deck with a key grid and trackpad, a hinge, and a lid tipped back just past upright (so screen and keys read together) ---- */
-    var T=mk(),lw=.78,ld=.54,yb=.30,dT=.05,tl=.2,hs=.92,vy=-Math.cos(tl),vz=-Math.sin(tl),ny=-Math.sin(tl),nz=Math.cos(tl);
+    var T=mk(),lw=.78,ld=.54,yb=.30,dT=.05,tl=.5,hs=.92,vy=-Math.cos(tl),vz=-Math.sin(tl),ny=-Math.sin(tl),nz=Math.cos(tl);
     function dk(x,z,y){return [x,(y===undefined?yb:y),z]}
     function scr(u,v,off){off=off||0;return [u,yb+vy*v+ny*off,-ld+vz*v+nz*off]}                         /* u across, v up the lid, off out of the face */
     var q1,k1;
@@ -260,6 +262,7 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
     for(k1=0;k1<40;k1++){q1=rrp(.28,.17,.02,k1/40);T.L.push(scr(.3+q1[0]*.8,hs*.52+q1[1]))}              /* a window on the screen */
     for(k1=0;k1<70;k1++)T.L.push(scr((r()*2-1)*(lw-.09),.06+r()*(hs-.18)));
     pack(T.L,B);
+    for(var kb=0;kb<N*3;kb++)B[kb]*=1.2;
     /* ---- cloud, used between shapes ---- */
     for(i=0;i<N;i++){var a2=r()*6.283,b2=Math.acos(2*r()-1),r2=.55*Math.cbrt(r());C[i*3]=Math.sin(b2)*Math.cos(a2)*r2;C[i*3+1]=Math.cos(b2)*r2-.05;C[i*3+2]=Math.sin(b2)*Math.sin(a2)*r2;D[i]=r();ch[i]=r()<.5?1:0}
     /* ---- the intro globe: meridians, parallels and a scattered shell; each ball point is paired with the phone point of the same
@@ -300,10 +303,10 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
   }
   var BK=7,SZ=3;
   function render(now){
-    var dt=Math.min(.05,(now-prev)/1000);prev=now;var ph=phase(now),m=ph.m,S=W/2*.98,cx=W/2,cy=H/2,lapW=ph.intro?0:(ph.from===ph.to?(ph.to?1:0):(ph.to?ease(m):1-ease(m))),tilt=.2+.47*lapW,ct=Math.cos(tilt),st=Math.sin(tilt);
+    var dt=Math.min(.05,(now-prev)/1000);prev=now;var ph=phase(now),m=ph.m,S=W/2*.98,cx=W/2,cy=H/2,lapW=ph.intro?0:(ph.from===ph.to?(ph.to?1:0):(ph.to?ease(m):1-ease(m))),tilt=.2+.3*lapW,ct=Math.cos(tilt),st=Math.sin(tilt);
     var BQ=window.BITS,vc=BQ.spinCube/100,vt=BQ.spinTree/100,sp=ph.intro?(.9+(vc-.9)*ease(m)):(ph.from===ph.to?(ph.from?vt:vc):vc+(vt-vc)*(ph.to?ease(m):1-ease(m)));
     if(!reduce&&!ph.intro)yaw+=dt*sp;
-    var yawE=Math.sin(yaw)*(.95-.5*lapW),cy2=Math.cos(yawE),sy=Math.sin(yawE);
+    var yawE=Math.sin(yaw)*(.95-.72*lapW),cy2=Math.cos(yawE),sy=Math.sin(yawE);
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.textBaseline='middle';ctx.textAlign='center';
     var buckets=[];for(var q=0;q<BK*SZ;q++)buckets.push([]);
     var src=ph.from?B:A,dst=ph.to?B:A,introPhi=0,introBeta=0;
@@ -317,7 +320,7 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
     }
     function proj(x,y,z,i,isR){
       var cT=ct,sT=st;
-      var x1=x*cy2+z*sy,z1=-x*sy+z*cy2,y2=y*cT-z1*sT,z2=y*sT+z1*cT,f=1/(1-z2*.22),px=cx+x1*f*S,py=cy+y2*f*S;
+      var x1=x*cy2+z*sy,z1=-x*sy+z*cy2,y2=y*cT+z1*sT,z2=-y*sT+z1*cT,f=1/(1-z2*.22),px=cx+x1*f*S,py=cy+y2*f*S;
       /* the pointer pushes particles away, so the shape dents under it */
       var dx=px-mx,dy=py-my,d=Math.hypot(dx,dy),R=80,tx=0,ty=0;
       if(d<R&&d>.01){var k=(1-d/R);k*=k*window.BITS.dent;tx=dx/d*k;ty=dy/d*k}

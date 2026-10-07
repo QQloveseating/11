@@ -411,7 +411,7 @@ a.who{cursor:pointer}
 @media (min-width:1141px){
   .c-right.bagwrap{margin-right:0;align-self:stretch;aspect-ratio:auto;min-height:380px;
     --fs1:calc((clamp(26px,3.34vw,48px) * 1.5 - 12px) * 1.4)}
-  .bits{top:calc(33px + var(--fs1) * .167);height:calc(100% - 33px - var(--fs1) * .167 - 4px)}
+  .bits{top:calc(33px + var(--fs1) * .167);height:calc(100% - 33px - var(--fs1) * .167 - 4px);left:-64px;width:calc(100% + 64px)}   /* reaches into the empty gap on the left so the artwork can be bigger */
 }
 
 /* wide: the list sits on the bottom edge of the cover so the artwork's bottom edge lines up with its last row */
