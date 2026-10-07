@@ -374,10 +374,10 @@ a.who{cursor:pointer}
    three statements = X (a clear step above 24), greeting = X + (X-24)/2, i.e. half of that step again.
    desktop: 24 -> 48 -> 60 */
 .name{--x0:clamp(26px,3.34vw,48px);--x:calc(var(--x0) * 1.2);font-size:var(--x);line-height:1.2}   /* headline text +20% */
-.name .ln:first-child{font-size:calc((var(--x0) * 1.5 - 12px) * 1.4 * 1.2);line-height:1.08;letter-spacing:-.04em;margin-bottom:.245em}
+.name .ln:first-child{font-size:calc((var(--x0) * 1.5 - 12px) * 1.4 * 1.2);line-height:1.08;letter-spacing:-.04em;margin-bottom:-.027em}   /* gap to the next line now equals the gap between the three lines below */
 @media (max-width:720px){
   .name{--x0:clamp(21px,6vw,28px);--x:calc(var(--x0) * 1.2)}
-  .name .ln:first-child{font-size:calc(var(--x) * 1.6 * 1.4);margin-bottom:.24em}
+  .name .ln:first-child{font-size:calc(var(--x) * 1.6 * 1.4);margin-bottom:-.038em}
 }
 
 /* project cards sit on the page background itself: the fade lands on exactly #0a0a0a */
@@ -454,3 +454,8 @@ a.who{cursor:pointer}
 .more.rv:not(.in){transform:translateY(40px);filter:blur(6px)}
 .more+.proj.rv{transition-delay:.2s}
 @media (prefers-reduced-motion:reduce){.more.rv:not(.in){transform:none;filter:none}}
+
+/* list under the headline: rows opened up (pitch 24px -> 34px) and the Education group set further apart */
+.cv{row-gap:10px}
+.cv-k.g,.cv .row.g{margin-top:40px}
+@media (max-width:720px){.cv{row-gap:8px}.cv-k.g,.cv .row.g{margin-top:30px}}
