@@ -187,7 +187,7 @@
     if(root.querySelector('.ac.fin')||reduce){sizeSlots();calibrate();slots.forEach(function(s){setWord(s,s.en);s.aw.style.opacity=1})}},150)});
 })();
 /* 0/1 particles: a cube and a tree, morphing into each other through a cloud, forever.
-   every number is adjustable from the tuner panel (press T) */
+   (the numbers below can be changed here) */
 window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80,dent:114},window.BITS||{});
 (function(){
   var cv=document.getElementById('bits');if(!cv)return;
@@ -369,40 +369,4 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
   size();if(!reduce)requestAnimationFrame(frame);
 })();
 </script>
-<script>try{history.scrollRestoration="manual"}catch(e){}</script><!-- tuner: press T (or add #tune to the address). remove this block before launch -->
-<script>
-(function(){
-  var SPEC=[
-    ['Phone and laptop','BITS',[['hold','Hold each shape','ms',800,8000,100],['morph','Change time','ms',600,5000,100],['spinCube','Phone sway speed','',0,150,5],['spinTree','Laptop sway speed','',0,150,5],['size','Digit size','%',60,180,5],['dent','Pointer dent','px',0,120,2]]]
-  ];
-  var DEF=JSON.parse(JSON.stringify({BITS:window.BITS}));
-  var panel=null;
-  function css(){var st=document.createElement('style');st.textContent=
-    '.tuner{position:fixed;right:12px;bottom:12px;width:290px;max-height:82vh;overflow:auto;z-index:100;background:rgba(14,14,17,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 16px 16px;font:500 13px/1.4 Satoshi,system-ui,sans-serif;color:#f5f5f8}'+
-    '.tuner h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#9a9a9a;font-weight:500;margin:14px 0 6px}.tuner h3:first-of-type{margin-top:6px}'+
-    '.tuner .tr{display:grid;grid-template-columns:96px 1fr 56px;gap:8px;align-items:center;margin:6px 0}.tuner .tr label{color:#9a9a9a}.tuner .tr output{text-align:right;font-size:12px}.tuner input[type=range]{width:100%}'+
-    '.tuner .tb{display:flex;gap:8px;align-items:center;justify-content:space-between}.tuner button{font:inherit;color:#f5f5f8;background:#1c1c20;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:6px 11px;cursor:pointer}.tuner button:hover{border-color:rgba(255,255,255,.4)}'+
-    '.tuner textarea{width:100%;height:96px;margin-top:10px;background:#0a0a0a;color:#bfe;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;font:11px/1.4 ui-monospace,Menlo,monospace;resize:vertical}'+
-    '@media(max-width:600px){.tuner{left:12px;width:auto}}';document.head.appendChild(st)}
-  function dump(){var o={BITS:window.BITS};var t=panel.querySelector('textarea');t.value=JSON.stringify(o,null,1)}
-  function build(){
-    css();panel=document.createElement('div');panel.className='tuner';
-    var h='<div class="tb"><b>Tuner</b><span><button data-a="reset">Reset</button> <button data-a="close">Close</button></span></div>';
-    SPEC.forEach(function(g){h+='<h3>'+g[0]+'</h3>';g[2].forEach(function(r){
-      h+='<div class="tr"><label>'+r[1]+'</label><input type="range" data-g="'+g[1]+'" data-k="'+r[0]+'" min="'+r[3]+'" max="'+r[4]+'" step="'+r[5]+'"><output data-u="'+r[2]+'"></output></div>'})});
-    h+='<div class="tb" style="margin-top:12px"><button data-a="copy">Copy settings</button><span style="color:#9a9a9a;font-size:12px">press T to hide</span></div><textarea readonly></textarea>';
-    panel.innerHTML=h;document.body.appendChild(panel);
-    function show(inp){var v=window[inp.dataset.g][inp.dataset.k];inp.value=v;var o=inp.parentNode.querySelector('output');o.textContent=v+o.dataset.u}
-    [].forEach.call(panel.querySelectorAll('input[type=range]'),function(inp){show(inp);inp.addEventListener('input',function(){window[inp.dataset.g][inp.dataset.k]=parseFloat(inp.value);show(inp);dump()})});
-    panel.addEventListener('click',function(e){var a=e.target.dataset&&e.target.dataset.a;if(!a)return;
-      if(a==='close')toggle(false);
-      if(a==='reset'){Object.keys(DEF).forEach(function(g){Object.assign(window[g],DEF[g])});[].forEach.call(panel.querySelectorAll('input[type=range]'),show);dump()}
-      if(a==='copy'){var t=panel.querySelector('textarea');t.select();try{(navigator.clipboard?navigator.clipboard.writeText(t.value):Promise.reject()).then(function(){e.target.textContent='Copied ✓'},function(){document.execCommand('copy');e.target.textContent='Copied ✓'})}catch(x){document.execCommand('copy');e.target.textContent='Copied ✓'}setTimeout(function(){e.target.textContent='Copy settings'},1500)}});
-    dump();
-  }
-  function toggle(on){if(!panel){if(on===false)return;build();return}panel.style.display=(on===undefined?panel.style.display==='none':on)?'':'none'}
-  addEventListener('keydown',function(e){if(e.key!=='t'&&e.key!=='T')return;if(e.metaKey||e.ctrlKey||e.altKey)return;var tg=e.target&&e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT')return;toggle()});
-  if(location.hash==='#tune')build();
-})();
-</script>
-</body></html>
+<script>try{history.scrollRestoration="manual"}catch(e){}</script></body></html>
