@@ -406,7 +406,7 @@ a.who{cursor:pointer}
    wide: top = cap-height of "Hi I'm QQ", bottom = baseline of the last list row, right = right edge of "Get In Touch".
    stacked: full content width, same left/right edges as the text and the top bar. */
 .c-right.bagwrap{position:relative;display:block;width:100%;aspect-ratio:1000/1060}
-@media (min-width:721px) and (max-width:1140px){.c-right.bagwrap{max-width:560px;margin-left:auto}}
+@media (min-width:721px) and (max-width:1140px){.c-right.bagwrap{max-width:560px;margin-left:auto;margin-right:auto}}
 .bits{position:absolute;inset:0;width:100%;height:100%;display:block}
 @media (min-width:1141px){
   .c-right.bagwrap{margin-right:0;align-self:stretch;aspect-ratio:auto;min-height:380px;
@@ -417,5 +417,21 @@ a.who{cursor:pointer}
 /* wide: the list sits on the bottom edge of the cover so the artwork's bottom edge lines up with its last row */
 @media (min-width:1141px){.cv{margin-top:auto}}
 
-/* pointer glow canvas: never blocks clicks or hovers */
-.glow{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:60}
+/* small screens: wider side gutters so the cover text sits a little nearer the middle; the top bar uses the same gutter so edges stay aligned */
+@media (max-width:1140px){
+  .cover{--gx:56px}
+  .topwrap{padding-left:56px;padding-right:56px}
+}
+@media (max-width:720px){
+  .cover{--gx:24px}
+  .topwrap{padding-left:24px;padding-right:24px}
+  .c-right.bagwrap{margin-left:auto;margin-right:auto}
+  .cv{grid-template-columns:max-content minmax(0,1fr);column-gap:14px}   /* first column hugs its text so the dates never wrap */
+  .cv .arrow{display:none}                                              /* hover arrow has no use on touch and was eating width */
+}
+@media (max-width:420px){
+  .topwrap .bar.topbar{gap:8px}
+  .topwrap .btns{gap:8px}
+  .topwrap .btn.txt{width:auto;padding:0 9px;font-size:13px}
+  .topwrap .who{gap:6px}
+}

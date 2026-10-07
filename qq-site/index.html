@@ -300,10 +300,10 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
   }
   var BK=7,SZ=3;
   function render(now){
-    var dt=Math.min(.05,(now-prev)/1000);prev=now;var ph=phase(now),m=ph.m,S=W/2*.98,cx=W/2,cy=H/2,lapW=ph.intro?0:(ph.from===ph.to?(ph.to?1:0):(ph.to?ease(m):1-ease(m))),tilt=.2+.2*lapW,ct=Math.cos(tilt),st=Math.sin(tilt);
+    var dt=Math.min(.05,(now-prev)/1000);prev=now;var ph=phase(now),m=ph.m,S=W/2*.98,cx=W/2,cy=H/2,lapW=ph.intro?0:(ph.from===ph.to?(ph.to?1:0):(ph.to?ease(m):1-ease(m))),tilt=.2+.47*lapW,ct=Math.cos(tilt),st=Math.sin(tilt);
     var BQ=window.BITS,vc=BQ.spinCube/100,vt=BQ.spinTree/100,sp=ph.intro?(.9+(vc-.9)*ease(m)):(ph.from===ph.to?(ph.from?vt:vc):vc+(vt-vc)*(ph.to?ease(m):1-ease(m)));
     if(!reduce&&!ph.intro)yaw+=dt*sp;
-    var yawE=Math.sin(yaw)*(.95-.38*lapW),cy2=Math.cos(yawE),sy=Math.sin(yawE);
+    var yawE=Math.sin(yaw)*(.95-.5*lapW),cy2=Math.cos(yawE),sy=Math.sin(yawE);
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.textBaseline='middle';ctx.textAlign='center';
     var buckets=[];for(var q=0;q<BK*SZ;q++)buckets.push([]);
     var src=ph.from?B:A,dst=ph.to?B:A,introPhi=0,introBeta=0;
@@ -363,49 +363,13 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
   size();if(!reduce)requestAnimationFrame(frame);
 })();
 </script>
-<script>try{history.scrollRestoration="manual"}catch(e){}</script><script>
-/* pointer glow: a soft light that appears under the cursor when it comes to rest and disappears the moment it moves.
-   every number below is adjustable from the tuner panel (press T) */
-window.GLOW=Object.assign({size:45,intensity:2,wait:50,fade:120,hard:45,tint:20},window.GLOW||{});
-(function(){
-  if(!matchMedia('(hover:hover) and (pointer:fine)').matches||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
-  var c=document.createElement('canvas');c.className='glow';c.setAttribute('aria-hidden','true');document.body.appendChild(c);
-  var x=c.getContext('2d'),W=0,H=0,dpr=1,raf=0,px=-999,py=-999,vis=0,target=0,timer=0,prev=0;
-  function fit(){dpr=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;paint()}
-  function paint(){
-    var G=window.GLOW;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);if(vis<=.002)return;
-    var tr=Math.round(255-(255-105)*G.tint/100),tg=Math.round(255-(255-224)*G.tint/100),al=(G.intensity/100)*vis,hard=G.hard/100,r=G.size;
-    var g=x.createRadialGradient(px,py,0,px,py,r);
-    g.addColorStop(0,'rgba('+tr+','+tg+',255,'+al.toFixed(4)+')');
-    if(hard>0)g.addColorStop(hard,'rgba('+tr+','+tg+',255,'+(al*.8).toFixed(4)+')');
-    g.addColorStop(1,'rgba('+tr+','+tg+',255,0)');
-    x.fillStyle=g;x.fillRect(px-r,py-r,r*2,r*2);
-  }
-  function tick(now){
-    raf=0;var dt=Math.min(.05,(now-prev)/1000);prev=now;var G=window.GLOW;
-    /* appears gently, leaves quickly */
-    if(target>vis)vis=Math.min(target,vis+dt*1000/Math.max(60,G.fade));else vis=Math.max(target,vis-dt*1000/110);
-    paint();
-    if(vis!==target)raf=requestAnimationFrame(tick);
-  }
-  function kick(){if(!raf){prev=performance.now();raf=requestAnimationFrame(tick)}}
-  function move(e){
-    px=e.clientX;py=e.clientY;target=0;kick();clearTimeout(timer);
-    timer=setTimeout(function(){target=1;kick()},window.GLOW.wait);
-  }
-  addEventListener('pointermove',move,{passive:true});
-  document.addEventListener('mouseleave',function(){clearTimeout(timer);target=0;kick()});
-  addEventListener('resize',fit);fit();
-})();
-</script>
-<!-- tuner: press T (or add #tune to the address). remove this block before launch -->
+<script>try{history.scrollRestoration="manual"}catch(e){}</script><!-- tuner: press T (or add #tune to the address). remove this block before launch -->
 <script>
 (function(){
   var SPEC=[
-    ['Pointer glow (shows when the cursor rests)','GLOW',[['size','Size','px',10,120,1],['intensity','Brightness','%',0.5,40,0.5],['wait','Wait before showing','ms',30,800,10],['fade','Fade in','ms',60,1200,10],['hard','Core hardness','%',0,80,5],['tint','Blue tint','%',0,100,5]]],
     ['Phone and laptop','BITS',[['hold','Hold each shape','ms',800,8000,100],['morph','Change time','ms',600,5000,100],['spinCube','Phone sway speed','',0,150,5],['spinTree','Laptop sway speed','',0,150,5],['size','Digit size','%',60,180,5],['dent','Pointer dent','px',0,120,2]]]
   ];
-  var DEF=JSON.parse(JSON.stringify({GLOW:window.GLOW,BITS:window.BITS}));
+  var DEF=JSON.parse(JSON.stringify({BITS:window.BITS}));
   var panel=null;
   function css(){var st=document.createElement('style');st.textContent=
     '.tuner{position:fixed;right:12px;bottom:12px;width:290px;max-height:82vh;overflow:auto;z-index:100;background:rgba(14,14,17,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 16px 16px;font:500 13px/1.4 Satoshi,system-ui,sans-serif;color:#f5f5f8}'+
@@ -414,7 +378,7 @@ window.GLOW=Object.assign({size:45,intensity:2,wait:50,fade:120,hard:45,tint:20}
     '.tuner .tb{display:flex;gap:8px;align-items:center;justify-content:space-between}.tuner button{font:inherit;color:#f5f5f8;background:#1c1c20;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:6px 11px;cursor:pointer}.tuner button:hover{border-color:rgba(255,255,255,.4)}'+
     '.tuner textarea{width:100%;height:96px;margin-top:10px;background:#0a0a0a;color:#bfe;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;font:11px/1.4 ui-monospace,Menlo,monospace;resize:vertical}'+
     '@media(max-width:600px){.tuner{left:12px;width:auto}}';document.head.appendChild(st)}
-  function dump(){var o={GLOW:window.GLOW,BITS:window.BITS};var t=panel.querySelector('textarea');t.value=JSON.stringify(o,null,1)}
+  function dump(){var o={BITS:window.BITS};var t=panel.querySelector('textarea');t.value=JSON.stringify(o,null,1)}
   function build(){
     css();panel=document.createElement('div');panel.className='tuner';
     var h='<div class="tb"><b>Tuner</b><span><button data-a="reset">Reset</button> <button data-a="close">Close</button></span></div>';
