@@ -191,7 +191,7 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
 (function(){
   var cv=document.getElementById('bits');if(!cv)return;
   var ctx=cv.getContext('2d'),reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  var N=1700,W=0,H=0,dpr=1,ar=1.2,A,B,C,D,ch,ox,oy,rg,Sp,mx=-999,my=-999,last=0,yaw=0,prev=performance.now(),t0=prev,introDone=false,tIntro=0,spin=0,spin0=0,spinEnd=0,morphInit=false,TB=.42,OM=1.0;
+  var N=1700,padX=0,padY=0,bw=1,bh=1,W=0,H=0,dpr=1,ar=1.2,A,B,C,D,ch,ox,oy,rg,Sp,mx=-999,my=-999,last=0,yaw=0,prev=performance.now(),t0=prev,introDone=false,tIntro=0,spin=0,spin0=0,spinEnd=0,morphInit=false,TB=.42,OM=1.0;
   function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
   function build(){
     var r=rng(7),i;A=new Float32Array(N*3);B=new Float32Array(N*3);C=new Float32Array(N*3);D=new Float32Array(N);ch=new Uint8Array(N);ox=new Float32Array(N);oy=new Float32Array(N);
@@ -264,10 +264,10 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
     pack(T.L,B);
     for(var kb=0;kb<N*3;kb++)B[kb]*=1.2;
     /* ---- cloud, used between shapes ---- */
-    for(i=0;i<N;i++){var a2=r()*6.283,b2=Math.acos(2*r()-1),r2=.55*Math.cbrt(r());C[i*3]=Math.sin(b2)*Math.cos(a2)*r2;C[i*3+1]=Math.cos(b2)*r2-.05;C[i*3+2]=Math.sin(b2)*Math.sin(a2)*r2;D[i]=r();ch[i]=r()<.5?1:0}
+    for(i=0;i<N;i++){var a2=r()*6.283,b2=Math.acos(2*r()-1),r2=.7*Math.cbrt(r());C[i*3]=Math.sin(b2)*Math.cos(a2)*r2;C[i*3+1]=Math.cos(b2)*r2-.05;C[i*3+2]=Math.sin(b2)*Math.sin(a2)*r2;D[i]=r();ch[i]=r()<.5?1:0}
     /* ---- the intro globe: meridians, parallels and a scattered shell; each ball point is paired with the phone point of the same
             height rank, so the ball flattens and stretches into the phone ---- */
-    var RB=.80,PAR=[-.8,-.5333,-.2667,0,.2667,.5333,.8],MER=6.2832/12,G=[];
+    var RB=1.04,PAR=[-.8,-.5333,-.2667,0,.2667,.5333,.8],MER=6.2832/12,G=[];
     for(i=0;i<N;i++){
       var ph0=r()*6.2832,cy0=2*r()-1,rb=RB*(1+(r()-.5)*.012);
       if(i%10<4){ph0=Math.floor(r()*12)*MER}
@@ -281,7 +281,9 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
     for(i=0;i<N;i++){var gi=ig[i],pi2=ia[i];Sp[pi2*3]=G[gi][0];Sp[pi2*3+1]=G[gi][1];Sp[pi2*3+2]=G[gi][2]}
   }
   function size(){
-    dpr=Math.min(2,window.devicePixelRatio||1);W=Math.max(200,cv.clientWidth);H=Math.max(200,cv.clientHeight);ar=H/W;
+    dpr=Math.min(2,window.devicePixelRatio||1);W=Math.max(200,cv.clientWidth);H=Math.max(200,cv.clientHeight);
+    var cs=getComputedStyle(cv.parentNode);padX=parseFloat(cs.getPropertyValue('--padx'))||0;padY=parseFloat(cs.getPropertyValue('--pady'))||0;
+    bw=Math.max(160,W-2*padX);bh=Math.max(160,H-2*padY);ar=bh/bw;
     cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);build();render(performance.now());
   }
   function ease(x){return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2}
@@ -303,7 +305,7 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
   }
   var BK=7,SZ=3;
   function render(now){
-    var dt=Math.min(.05,(now-prev)/1000);prev=now;var ph=phase(now),m=ph.m,S=W/2*.98,cx=W/2,cy=H/2,lapW=ph.intro?0:(ph.from===ph.to?(ph.to?1:0):(ph.to?ease(m):1-ease(m))),tilt=.2+.3*lapW,ct=Math.cos(tilt),st=Math.sin(tilt);
+    var dt=Math.min(.05,(now-prev)/1000);prev=now;var ph=phase(now),m=ph.m,S=bw/2*.98,cx=W/2,cy=H/2,lapW=ph.intro?0:(ph.from===ph.to?(ph.to?1:0):(ph.to?ease(m):1-ease(m))),tilt=.2+.3*lapW,ct=Math.cos(tilt),st=Math.sin(tilt);
     var BQ=window.BITS,vc=BQ.spinCube/100,vt=BQ.spinTree/100,sp=ph.intro?(.9+(vc-.9)*ease(m)):(ph.from===ph.to?(ph.from?vt:vc):vc+(vt-vc)*(ph.to?ease(m):1-ease(m)));
     if(!reduce&&!ph.intro)yaw+=dt*sp;
     var yawE=Math.sin(yaw)*(.95-.72*lapW),cy2=Math.cos(yawE),sy=Math.sin(yawE);
@@ -331,7 +333,7 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
       var x,y,z,i3=i*3;
       if(ph.intro){
         var v0=0;
-        if(m>0){var dly=(Sp[i3+1]/.8+1)/2;v0=ease(Math.min(1,Math.max(0,m*1.18-.18*dly)))}
+        if(m>0){var dly=(Sp[i3+1]/1.04+1)/2;v0=ease(Math.min(1,Math.max(0,m*1.18-.18*dly)))}
         var bx=Sp[i3]+(A[i3]-Sp[i3])*v0,by=Sp[i3+1]+(A[i3+1]-Sp[i3+1])*v0,bz=Sp[i3+2]+(A[i3+2]-Sp[i3+2])*v0;
         var cp=Math.cos(introPhi),sp2=Math.sin(introPhi),bx2=bx*cp+bz*sp2,bz2=-bx*sp2+bz*cp,cb=Math.cos(introBeta),sb=Math.sin(introBeta);
         x=bx2;y=by*cb-bz2*sb;z=by*sb+bz2*cb;

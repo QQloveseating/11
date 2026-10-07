@@ -407,11 +407,13 @@ a.who{cursor:pointer}
    stacked: full content width, same left/right edges as the text and the top bar. */
 .c-right.bagwrap{position:relative;display:block;width:100%;aspect-ratio:1000/1060}
 @media (min-width:721px) and (max-width:1140px){.c-right.bagwrap{max-width:560px;margin-left:auto;margin-right:auto}}
-.bits{position:absolute;inset:0;width:100%;height:100%;display:block}
+.c-right.bagwrap{--padx:72px;--pady:72px}
+.bits{position:absolute;left:calc(var(--padx) * -1);top:calc(var(--pady) * -1);width:calc(100% + 2 * var(--padx));height:calc(100% + 2 * var(--pady));display:block;pointer-events:none}   /* a transparent margin so nothing is clipped while the shapes sway */
 @media (min-width:1141px){
   .c-right.bagwrap{margin-right:0;align-self:stretch;aspect-ratio:auto;min-height:380px;
     --fs1:calc((clamp(26px,3.34vw,48px) * 1.5 - 12px) * 1.4)}
-  .bits{top:calc(33px + var(--fs1) * .167);height:calc(100% - 33px - var(--fs1) * .167 - 4px);left:-64px;width:calc(100% + 64px)}   /* reaches into the empty gap on the left so the artwork can be bigger */
+  .c-right.bagwrap{--padx:72px;--pady:72px}
+  .bits{top:calc(33px + var(--fs1) * .167 - var(--pady));height:calc(100% - 33px - var(--fs1) * .167 - 4px + 2 * var(--pady));left:calc(-64px - var(--padx));width:calc(100% + 64px + 2 * var(--padx))}   /* the visible box reaches into the empty gap on the left; the margin around it only stops clipping */   /* reaches into the empty gap on the left so the artwork can be bigger */
 }
 
 /* wide: the list sits on the bottom edge of the cover so the artwork's bottom edge lines up with its last row */
@@ -423,6 +425,7 @@ a.who{cursor:pointer}
   .topwrap{padding-left:56px;padding-right:56px}
 }
 @media (max-width:720px){
+  .c-right.bagwrap{--padx:56px;--pady:72px}
   .cover{--gx:24px}
   .topwrap{padding-left:24px;padding-right:24px}
   .c-right.bagwrap{margin-left:auto;margin-right:auto}
