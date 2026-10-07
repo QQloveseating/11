@@ -165,11 +165,12 @@
       }else if(it.k==='br')t+=240;
     });
     raf=requestAnimationFrame(place);
-    startCycles(t+800);                                                  /* slots stay empty while typing */
-    later(function(){                                                    /* cycling begins: no more underscores */
+    var tEnd=t-240+30;                                                   /* the pause after the last line is skipped: rolling starts as the last letter lands */
+    startCycles(tEnd);
+    later(function(){                                                    /* cycling begins: the underscores vanish with it */
       slots.forEach(function(s){s.ph.classList.remove('show')});
       cancelAnimationFrame(raf);caret.classList.remove('blink');caret.style.opacity=0;
-    },t+800);
+    },tEnd);
   }
   var ready=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();
   ready.then(run);
