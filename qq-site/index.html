@@ -159,7 +159,7 @@
 })();
 /* 0/1 particles: a cube and a tree, morphing into each other through a cloud, forever.
    every number is adjustable from the tuner panel (press T) */
-window.BITS=Object.assign({hold:3500,morph:2000,spinCube:55,spinTree:24,size:100,dent:46},window.BITS||{});
+window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80,dent:114},window.BITS||{});
 (function(){
   var cv=document.getElementById('bits');if(!cv)return;
   var ctx=cv.getContext('2d'),reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -261,7 +261,7 @@ window.BITS=Object.assign({hold:3500,morph:2000,spinCube:55,spinTree:24,size:100
 <script>try{history.scrollRestoration="manual"}catch(e){}</script><script>
 /* pointer glow: a small soft light under the cursor that leaves a short fading trail.
    every number below is adjustable from lab.html (it writes window.GLOW) */
-window.GLOW=Object.assign({size:22,intensity:20,life:520,taper:45,hard:0,tint:0,spacing:6},window.GLOW||{});
+window.GLOW=Object.assign({size:45,intensity:1,life:520,taper:35,hard:45,tint:20,spacing:3},window.GLOW||{});
 (function(){
   if(!matchMedia('(hover:hover) and (pointer:fine)').matches||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   var c=document.createElement('canvas');c.className='glow';c.setAttribute('aria-hidden','true');document.body.appendChild(c);
@@ -297,7 +297,7 @@ window.GLOW=Object.assign({size:22,intensity:20,life:520,taper:45,hard:0,tint:0,
 })();
 </script>
 <script>
-window.INK=Object.assign({size:55,life:1500,drip:40,rim:20,foil:4},window.INK||{});
+window.INK=Object.assign({size:83,life:3000,drip:95,rim:20,foil:4},window.INK||{});
 /* hover reveal on the headline: ragged ink blobs follow the pointer; inside them the letters turn into glossy foil
    balloons. when the pointer moves on the ink shrinks and drips downward. */
 (function(){
@@ -409,7 +409,7 @@ window.INK=Object.assign({size:55,life:1500,drip:40,rim:20,foil:4},window.INK||{
 <script>
 (function(){
   var SPEC=[
-    ['Pointer glow','GLOW',[['size','Size','px',6,80,1],['intensity','Brightness','%',2,80,1],['life','Trail length','ms',80,1600,20],['taper','Tail shrink','%',0,90,5],['hard','Core hardness','%',0,80,5],['tint','Blue tint','%',0,100,5],['spacing','Trail density','px',2,24,1]]],
+    ['Pointer glow','GLOW',[['size','Size','px',6,80,1],['intensity','Brightness','%',1,80,1],['life','Trail length','ms',80,1600,20],['taper','Tail shrink','%',0,90,5],['hard','Core hardness','%',0,80,5],['tint','Blue tint','%',0,100,5],['spacing','Trail density','px',2,24,1]]],
     ['Headline hover ink','INK',[['size','Blob size','px',20,110,1],['life','Lifetime','ms',400,3200,50],['drip','Drips','%',0,100,5],['rim','Edge line','%',0,60,2],['foil','Colour cycle','s',1,12,.5]]],
     ['Cube and tree','BITS',[['hold','Hold each shape','ms',800,8000,100],['morph','Change time','ms',600,5000,100],['spinCube','Cube spin','',0,150,5],['spinTree','Tree spin','',0,150,5],['size','Digit size','%',60,180,5],['dent','Pointer dent','px',0,120,2]]]
   ];
