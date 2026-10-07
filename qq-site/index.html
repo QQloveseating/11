@@ -101,8 +101,15 @@
     var a=document.createElement('span');a.className='aw';s.el.appendChild(a);s.aw=a;return a;
   }
   var EASE='cubic-bezier(.22,1,.36,1)',DIM=.7;
+  /* Instrument Serif matches the body font at .97em. Fallback scripts have taller glyphs, so they are drawn a little smaller */
+  function scriptScale(t){
+    if(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(t))return .82;
+    if(/[\u0900-\u097f]/.test(t))return .84;
+    if(/[\u0e00-\u0e7f]/.test(t))return .84;
+    return 1;
+  }
   function swap(s,text,gap,final){
-    var old=s.aw,nw=document.createElement('span');nw.className='aw';nw.textContent=text;s.el.appendChild(nw);
+    var old=s.aw,nw=document.createElement('span');nw.className='aw';nw.textContent=text;nw.style.fontSize=(.97*scriptScale(text)).toFixed(3)+'em';s.el.appendChild(nw);
     var dur=final?620:Math.max(110,Math.min(320,gap*.85)),tgt=final?1:DIM,rise=final?'.5em':'.38em';
     nw._o=tgt;
     nw.animate([{opacity:0,transform:'translateY('+rise+')',filter:'blur(4px)'},{opacity:tgt,transform:'translateY(0)',filter:'blur(0)'}],{duration:dur,easing:EASE,fill:'forwards'});
@@ -222,30 +229,36 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
     P.outline(-.2,-ph+.25,.17,.17,.05,-pt,50);P.ring(-.26,-ph+.18,.06,-pt,22);P.ring(-.26,-ph+.34,.06,-pt,22);P.ring(-.12,-ph+.26,.045,-pt,18);   /* camera module */
     P.ring(0,-.05,.1,-pt,34);P.fill(0,.1,pw-.06,ph-.12,-pt,120);
     pack(P.L,A);
-    /* ---- laptop: deck with keys and trackpad, hinge, screen with code lines ---- */
-    var T=mk(),lw=.72,ld=.5,yb=.34;
-    T.outline(0,yb,lw,.03,.0001,0,1);                                                                   /* (placeholder keeps helpers uniform) */
-    function deck(x,z){return [x,yb,z]}
-    for(var kk=0;kk<300;kk++){var u0=kk/300,x0,z0;                                                      /* deck outline, a rectangle on the base plane */
-      var per=2*(2*lw+2*ld),dd=(u0+(r()-.5)*.002)*per;
-      if(dd<2*lw){x0=-lw+dd;z0=-ld}else if(dd<2*lw+2*ld){x0=lw;z0=-ld+(dd-2*lw)}else if(dd<4*lw+2*ld){x0=lw-(dd-2*lw-2*ld);z0=ld}else{x0=-lw;z0=ld-(dd-4*lw-2*ld)}
-      T.L.push(deck(x0,z0))}
-    for(var e0=0;e0<90;e0++){var ex=(r()<.5?-lw:lw),ez=(r()<.5?-ld:ld),pick=r();T.L.push([ex*(pick<.5?1:r()),yb+r()*.035,ez*(pick<.5?r():1)])}   /* the thin slab edge */
-    for(var row=0;row<5;row++)for(var col=0;col<13;col++){var kx=-.62+col*.1,kz=-.3+row*.08;T.L.push([kx,yb-.004,kz]);T.L.push([kx+.035,yb-.004,kz])}   /* keys */
-    T.line(-.22,yb-.004,.17,.22,yb-.004,.17,14);
-    for(var tp=0;tp<56;tp++){var qt=rrp(.2,.08,.025,tp/56);T.L.push([qt[0],yb-.004,.33+qt[1]*.8])}        /* trackpad */
-    for(var df=0;df<130;df++)T.L.push([(r()*2-1)*(lw-.06),yb-.004,(r()*2-1)*(ld-.05)]);
-    /* screen: hinged at the back edge and tipped back 12 degrees from upright */
-    var tilt=.21,hs=.86,dy=-Math.cos(tilt),dz=-Math.sin(tilt);
-    function scr(u,v){return [u,yb+dy*v,-ld+dz*v]}                                                       /* u across, v up the screen */
-    for(var so=0;so<320;so++){var qs=rrp(lw,hs/2,.05,so/320);T.L.push(scr(qs[0],hs/2+qs[1]))}
-    for(var si=0;si<190;si++){var qi=rrp(lw-.07,hs/2-.07,.03,si/190);T.L.push(scr(qi[0],hs/2+qi[1]))}
-    T.L.push(scr(0,hs-.03),scr(.01,hs-.03),scr(-.01,hs-.03));
-    for(var ln=0;ln<9;ln++){var y0=.14+ln*.075,x00=-lw+.15+(ln%3)*.06,len=.3+((ln*53)%7)/7*.55,n0=Math.max(8,Math.round(len*34));
-      for(var q0=0;q0<n0;q0++){var pp=scr(x00+len*q0/(n0-1),y0);T.L.push(pp)}}                         /* code lines */
-    for(var sf=0;sf<200;sf++){T.L.push(scr((r()*2-1)*(lw-.08),.07+r()*(hs-.17)))}
-    for(var hg=0;hg<70;hg++){T.L.push([-lw*.55+hg/70*lw*1.1,yb,-ld])}                                   /* hinge */
-    for(var lg=0;lg<40;lg++){var an2=lg/40*6.2832;T.L.push(scr(Math.cos(an2)*.1,hs*.5+Math.sin(an2)*.1))}   /* logo ring */
+    /* ---- laptop: thick deck with a key grid and trackpad, a hinge, and a lid tipped back just past upright (so screen and keys read together) ---- */
+    var T=mk(),lw=.78,ld=.54,yb=.30,dT=.05,tl=.2,hs=.92,vy=-Math.cos(tl),vz=-Math.sin(tl),ny=-Math.sin(tl),nz=Math.cos(tl);
+    function dk(x,z,y){return [x,(y===undefined?yb:y),z]}
+    function scr(u,v,off){off=off||0;return [u,yb+vy*v+ny*off,-ld+vz*v+nz*off]}                         /* u across, v up the lid, off out of the face */
+    var q1,k1;
+    for(k1=0;k1<220;k1++){q1=rrp(lw,ld,.06,k1/220);T.L.push(dk(q1[0],q1[1]))}                          /* deck top edge */
+    for(k1=0;k1<90;k1++){q1=rrp(lw,ld,.06,k1/90);T.L.push(dk(q1[0],q1[1],yb+dT))}                       /* deck bottom edge */
+    for(k1=0;k1<70;k1++){q1=rrp(lw,ld,.06,r());T.L.push(dk(q1[0],q1[1],yb+r()*dT))}                     /* deck sides */
+    for(k1=0;k1<12;k1++){var an=Math.PI*k1/11;T.L.push(dk(Math.cos(an)*.08,ld-Math.sin(an)*.04))}      /* thumb notch */
+    for(k1=0;k1<90;k1++){q1=rrp(lw-.07,.3,.02,k1/90);T.L.push(dk(q1[0],-.1+q1[1]-.0))}                  /* keyboard well */
+    var cols=12,pitch=(2*(lw-.12))/(cols-1);
+    for(var row=0;row<5;row++)for(var col=0;col<cols;col++){
+      var kx=-(lw-.12)+col*pitch,kz=-.34+row*.12,hw=pitch*.4,hz=.04;
+      T.L.push(dk(kx-hw,kz-hz),dk(kx+hw,kz-hz),dk(kx+hw,kz+hz),dk(kx-hw,kz+hz));                       /* each key: four corners */
+    }
+    for(var bk=0;bk<5;bk++){var bx=bk<2?-(lw-.12)+bk*pitch:(bk<3?-.0:(lw-.12)-(4-bk)*pitch),hw2=bk===2?.3:pitch*.4;
+      if(bk===2){for(var sp=0;sp<14;sp++){T.L.push(dk(-.3+.6*sp/13,.26-.04),dk(-.3+.6*sp/13,.26+.04))}continue}
+      T.L.push(dk(bx-hw2,.26-.04),dk(bx+hw2,.26-.04),dk(bx+hw2,.26+.04),dk(bx-hw2,.26+.04))}
+    for(k1=0;k1<40;k1++){q1=rrp(.2,.07,.02,k1/40);T.L.push(dk(q1[0],.4+q1[1]*.8))}                      /* trackpad */
+    for(k1=0;k1<40;k1++){T.L.push(dk(-lw*.6+1.2*lw*k1/39,-ld+.01,yb-.012))}                              /* hinge */
+    for(k1=0;k1<230;k1++){q1=rrp(lw,hs/2,.05,k1/230);T.L.push(scr(q1[0],hs/2+q1[1]))}                  /* lid edge */
+    for(k1=0;k1<140;k1++){q1=rrp(lw-.065,hs/2-.07,.03,k1/140);T.L.push(scr(q1[0],hs/2+q1[1]))}          /* display */
+    for(k1=0;k1<70;k1++){q1=rrp(lw,hs/2,.05,r());T.L.push(scr(q1[0],hs/2+q1[1],-r()*.03))}              /* lid thickness */
+    T.L.push(scr(0,hs-.035),scr(.012,hs-.035),scr(-.012,hs-.035));                                       /* camera */
+    for(var ln=0;ln<8;ln++){var y0=.2+ln*.075,x00=-lw+.15+(ln%3)*.06,len=.28+((ln*53)%7)/7*.5,n0=Math.max(8,Math.round(len*20));
+      for(var q0=0;q0<n0;q0++)T.L.push(scr(x00+len*q0/(n0-1),y0))}                                       /* code lines */
+    for(k1=0;k1<20;k1++)T.L.push(scr(-lw+.08+(2*lw-.16)*k1/19,hs-.1));                                    /* menu bar */
+    for(var dc=0;dc<6;dc++){var dx=-.2+dc*.08;T.L.push(scr(dx-.025,.1),scr(dx+.025,.1),scr(dx+.025,.14),scr(dx-.025,.14))}   /* dock */
+    for(k1=0;k1<40;k1++){q1=rrp(.28,.17,.02,k1/40);T.L.push(scr(.3+q1[0]*.8,hs*.52+q1[1]))}              /* a window on the screen */
+    for(k1=0;k1<70;k1++)T.L.push(scr((r()*2-1)*(lw-.09),.06+r()*(hs-.18)));
     pack(T.L,B);
     /* ---- cloud, used between shapes ---- */
     for(i=0;i<N;i++){var a2=r()*6.283,b2=Math.acos(2*r()-1),r2=.55*Math.cbrt(r());C[i*3]=Math.sin(b2)*Math.cos(a2)*r2;C[i*3+1]=Math.cos(b2)*r2-.05;C[i*3+2]=Math.sin(b2)*Math.sin(a2)*r2;D[i]=r();ch[i]=r()<.5?1:0}
@@ -287,10 +300,10 @@ window.BITS=Object.assign({hold:1800,morph:2000,spinCube:140,spinTree:80,size:80
   }
   var BK=7,SZ=3;
   function render(now){
-    var dt=Math.min(.05,(now-prev)/1000);prev=now;var ph=phase(now),m=ph.m,S=W/2*.98,cx=W/2,cy=H/2,tilt=ph.intro?.2:(ph.from===ph.to?(ph.to?.62:.2):.2+.42*(ph.to?ease(m):1-ease(m))),ct=Math.cos(tilt),st=Math.sin(tilt);
+    var dt=Math.min(.05,(now-prev)/1000);prev=now;var ph=phase(now),m=ph.m,S=W/2*.98,cx=W/2,cy=H/2,lapW=ph.intro?0:(ph.from===ph.to?(ph.to?1:0):(ph.to?ease(m):1-ease(m))),tilt=.2+.2*lapW,ct=Math.cos(tilt),st=Math.sin(tilt);
     var BQ=window.BITS,vc=BQ.spinCube/100,vt=BQ.spinTree/100,sp=ph.intro?(.9+(vc-.9)*ease(m)):(ph.from===ph.to?(ph.from?vt:vc):vc+(vt-vc)*(ph.to?ease(m):1-ease(m)));
     if(!reduce&&!ph.intro)yaw+=dt*sp;
-    var yawE=Math.sin(yaw)*.95,cy2=Math.cos(yawE),sy=Math.sin(yawE);
+    var yawE=Math.sin(yaw)*(.95-.38*lapW),cy2=Math.cos(yawE),sy=Math.sin(yawE);
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.textBaseline='middle';ctx.textAlign='center';
     var buckets=[];for(var q=0;q<BK*SZ;q++)buckets.push([]);
     var src=ph.from?B:A,dst=ph.to?B:A,introPhi=0,introBeta=0;

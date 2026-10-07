@@ -365,7 +365,7 @@ a.who{cursor:pointer}
 .name .ac{position:relative;display:inline-block;width:0;height:1.2em;vertical-align:baseline;transform:translateY(var(--dy,0px))}
 .name .aw{position:absolute;left:0;bottom:0;white-space:nowrap;transform-origin:0 100%;
   font-family:var(--serif),"Songti SC","Noto Serif CJK SC","Hiragino Mincho ProN","Apple SD Gothic Neo",serif;
-  font-style:italic;font-weight:400;letter-spacing:normal;font-size:1.2em;line-height:1;opacity:0}
+  font-style:italic;font-weight:400;letter-spacing:normal;font-size:.97em;line-height:1;opacity:0}
 .name .caret2{position:absolute;left:0;top:0;width:.55em;height:2px;border-radius:1px;background:#fff;opacity:0;pointer-events:none}
 .name .caret2.blink{animation:blink .9s steps(1) infinite}
 @media (prefers-reduced-motion:reduce){.name .ch{opacity:1}.name .caret2{display:none}}
