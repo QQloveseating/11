@@ -20,6 +20,7 @@ body{background:var(--bg);color:var(--text);font:500 14px/1.4 "Satoshi",system-u
 .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 button{font:inherit;color:var(--text);background:#1a1a1a;border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer}
 button:hover{border-color:rgba(255,255,255,.3)}button.pri{background:var(--text);color:#000;border-color:var(--text)}
+.langtag{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);min-height:1.4em}
 .note{color:var(--muted);font-size:12px;max-width:620px}
 .panel{background:var(--card);border-left:1px solid var(--line);padding:20px;overflow:auto;max-height:100vh;position:sticky;top:0}
 .panel h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:18px 0 8px}
@@ -39,6 +40,7 @@ textarea{width:100%;height:150px;background:#0a0a0a;color:#cfe;border:1px solid 
     <span class="ln">I design with <span class="slot" data-k="1"></span></span>
     <span class="ln">I ship with <span class="slot" data-k="2"></span></span>
   </div>
+  <div class="langtag" id="langtag">&nbsp;</div>
   <div class="bar"><button class="pri" id="play">▶ Replay</button><button id="loop">Loop: off</button><button id="freeze">Freeze on a language</button></div>
   <p class="note">Pick an effect, drag the sliders until it feels right, then press <b>Copy settings</b> and send them to me. “Slow‑mo” lets you inspect a transition frame by frame.</p>
 </main>
@@ -52,9 +54,10 @@ textarea{width:100%;height:150px;background:#0a0a0a;color:#cfe;border:1px solid 
   <div class="row"><label>Step</label><input id="step" type="range" min="80" max="1200" step="10"><output></output></div>
   <div class="row"><label>Transition %</label><input id="dur" type="range" min="20" max="100" step="5"><output></output></div>
   <div class="row"><label>Slow down end</label><input id="decel" type="range" min="0" max="300" step="10"><output></output></div>
-  <div class="row"><label>Languages</label><input id="count" type="range" min="2" max="9" step="1"><output></output></div>
+  <div class="row"><label>Languages</label><input id="count" type="range" min="2" max="12" step="1"><output></output></div>
   <div class="row"><label>Stagger</label><input id="stagger" type="range" min="0" max="800" step="20"><output></output></div>
   <div class="row"><label>Slow‑mo</label><input id="slow" type="range" min="1" max="8" step="0.5"><output></output></div>
+  <div class="row s"><label>Words</label><select id="sync"><option value="together">Same language together</option><option value="independent">Each word on its own</option></select></div>
   <div class="row s"><label>Order</label><select id="order"><option value="fixed">Fixed</option><option value="random">Random</option></select></div>
   <h2>Look</h2>
   <div class="row s"><label>Font</label><select id="font"></select></div>
@@ -69,10 +72,12 @@ textarea{width:100%;height:150px;background:#0a0a0a;color:#cfe;border:1px solid 
 </div>
 <script>
 (function(){
+/* index k is the same language in all three lists, so the three words can switch language together */
+var LANGS=["中文","日本語","Français","한국어","Español","Italiano","Português","Türkçe","हिन्दी","Deutsch","Русский","ไทย"];
 var DATA=[
- {en:"ambiguity",l:"模糊性|曖昧さ|ambiguïté|모호함|ambigüedad|ambiguità|ambiguidade|belirsizlik|अस्पष्टता".split("|")},
- {en:"taste",l:"品味|センス|goût|취향|gusto|Geschmack|gosto|zevk|रुचि".split("|")},
- {en:"code",l:"代码|コード|코드|код|código|codice|kod|कोड|โค้ด".split("|")}];
+ {en:"ambiguity",l:"模糊性|曖昧さ|ambiguïté|모호함|ambigüedad|ambiguità|ambiguidade|belirsizlik|अस्पष्टता|Mehrdeutigkeit|неоднозначность|ความคลุมเครือ".split("|")},
+ {en:"taste",l:"品味|センス|goût|취향|gusto|gusto|gosto|zevk|रुचि|Geschmack|вкус|รสนิยม".split("|")},
+ {en:"code",l:"代码|コード|code|코드|código|codice|código|kod|कोड|Code|код|โค้ด".split("|")}];
 var EASES={"Smooth out":"cubic-bezier(.22,1,.36,1)","Ease in-out":"cubic-bezier(.65,0,.35,1)","Snappy":"cubic-bezier(.2,.9,.2,1)","Overshoot":"cubic-bezier(.34,1.56,.64,1)","Linear":"linear"};
 var FONTS={"Instrument Serif":'"Instrument Serif",Georgia,serif',"Playfair Display":'"Playfair Display",Georgia,serif',"Cormorant Garamond":'"Cormorant Garamond",Georgia,serif',"Fraunces":'"Fraunces",Georgia,serif',"DM Serif Display":'"DM Serif Display",Georgia,serif',"System serif":'Georgia,"Times New Roman",serif'};
 var FX={
@@ -97,7 +102,7 @@ var PRESETS={
 };
 var $=function(id){return document.getElementById(id)};
 var S=JSON.parse(JSON.stringify(PRESETS["Soft rise"])),slow=1,order="fixed",looping=false,timers=[],anims=[],raf=[];
-S.slow=1;S.order="fixed";
+S.slow=1;S.order="fixed";S.sync="together";
 var hl=$("hl"),slots=[].slice.call(document.querySelectorAll(".slot"));
 function fill(sel,obj){Object.keys(obj).forEach(function(k){var o=document.createElement("option");o.value=k;o.textContent=k;sel.appendChild(o)})}
 fill($("effect"),FX);fill($("ease"),EASES);fill($("font"),FONTS);
@@ -105,7 +110,7 @@ Object.keys(PRESETS).forEach(function(n){var b=document.createElement("button");
 var ctl=["step","dur","decel","count","stagger","slow","size","ls","fs","dimo"];
 var fmt={step:"ms",dur:"%",decel:"%",count:"",stagger:"ms",slow:"×",size:"%",ls:"",fs:"px",dimo:"%"};
 function sync(){
-  ["effect","ease","font","order"].forEach(function(k){$(k).value=S[k]});
+  ["effect","ease","font","order","sync"].forEach(function(k){$(k).value=S[k]});
   ctl.forEach(function(k){var e=$(k);e.value=S[k];e.parentNode.querySelector("output").textContent=S[k]+fmt[k]});
   hl.style.setProperty("--fs",S.fs+"px");hl.style.setProperty("--ws",(S.size/100*1)+"em");
   hl.style.setProperty("--wf",FONTS[S.font]);hl.style.setProperty("--wls",(S.ls/100)+"em");
@@ -113,7 +118,7 @@ function sync(){
   var o={};Object.keys(S).forEach(function(k){o[k]=S[k]});$("out").value=JSON.stringify(o,null,2);
 }
 [].concat(ctl).forEach(function(k){$(k).addEventListener("input",function(){S[k]=parseFloat(this.value);sync();if(k==="size"||k==="fs"||k==="ls")layout()})});
-["effect","ease","font","order"].forEach(function(k){$(k).addEventListener("change",function(){S[k]=this.value;sync();layout();play()})});
+["effect","ease","font","order","sync"].forEach(function(k){$(k).addEventListener("change",function(){S[k]=this.value;sync();layout();play()})});
 /* slot geometry: sizer holds the widest word so nothing around the slot ever moves */
 function layout(){
   slots.forEach(function(sl,i){
@@ -128,7 +133,14 @@ function layout(){
   });
 }
 function clear(){timers.forEach(clearTimeout);timers=[];raf.forEach(cancelAnimationFrame);raf=[];anims.forEach(function(a){try{a.cancel()}catch(e){}});anims=[]}
+var shared=[];
+function langOrder(n){
+  var idx=[];for(var k=0;k<DATA[0].l.length;k++)idx.push(k);
+  if(S.order==="random"){for(var j=idx.length-1;j>0;j--){var r=Math.floor(Math.random()*(j+1));var t=idx[j];idx[j]=idx[r];idx[r]=t}}
+  return idx.slice(0,n);
+}
 function pick(i){
+  if(S.sync==="together")return shared.map(function(k){return DATA[i].l[k]});
   var l=DATA[i].l.slice(),n=S.count;
   if(S.order==="random"){for(var j=l.length-1;j>0;j--){var k=Math.floor(Math.random()*(j+1));var t=l[j];l[j]=l[k];l[k]=t}}
   else{var off=i*3;l=l.slice(off%l.length).concat(l.slice(0,off%l.length))}
@@ -155,15 +167,17 @@ function swap(sl,text,final,gap){
 }
 function play(){
   clear();layout();
+  var together=S.sync==="together",stg=together?0:S.stagger,tag=$("langtag");
+  shared=together?langOrder(S.count):[];tag.innerHTML="&nbsp;";
   slots.forEach(function(sl,i){
-    var seq=pick(i),t=420*S.slow+i*S.stagger*S.slow,n=seq.length;
+    var seq=pick(i),t=420*S.slow+i*stg*S.slow,n=seq.length;
     seq.forEach(function(wd,k){
       var gap=S.step*(1+S.decel/100*3*Math.pow(k/Math.max(1,n),2))*S.slow;
-      timers.push(setTimeout(function(){swap(sl,wd,false,gap)},t));t+=gap;
+      timers.push(setTimeout(function(){swap(sl,wd,false,gap);if(together&&i===0)tag.textContent=LANGS[shared[k]]},t));t+=gap;
     });
-    timers.push(setTimeout(function(){swap(sl,DATA[i].en,true,S.step*1.4*S.slow)},t));
+    timers.push(setTimeout(function(){swap(sl,DATA[i].en,true,S.step*1.4*S.slow);if(together&&i===0)tag.textContent="English"},t));
   });
-  var total=420*S.slow+(slots.length-1)*S.stagger*S.slow+S.step*(S.count+S.decel/100*S.count)*S.slow+S.step*3*S.slow;
+  var total=420*S.slow+(slots.length-1)*stg*S.slow+S.step*(S.count+S.decel/100*S.count)*S.slow+S.step*3*S.slow;
   if(looping)timers.push(setTimeout(play,total+1200));
 }
 $("play").onclick=play;
